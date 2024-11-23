@@ -1,43 +1,66 @@
 package be.serverunit.actors
 
-object MachineActor(machine: Int) {
-  def apply(): Behavior[MachineMessage] = Behaviors.setup(context =>
+import akka.actor.typed.Behavior
+import akka.actor.typed.scaladsl.Behaviors
+import be.serverunit.database.*
+import be.serverunit.database.BasicOperations.{getLastSessionByUser, getSessionByUser}
+import be.serverunit.database.Operations._
+
+import java.time.LocalDateTime
+import scala.concurrent.Await
+import scala.concurrent.duration.*
+import scala.language.postfixOps
+
+object MachineActor{
+
+  sealed trait MachineMessage
+  case class StartData(user: String, receivedTime: LocalDateTime, weight: Int) extends MachineMessage
+  case class Data(distance: Int, timer: Int) extends MachineMessage
+  case class EndData(reps: Int, time: LocalDateTime) extends MachineMessage
+
+  def apply(machineID: Int): Behavior[MachineMessage] = Behaviors.setup(context =>
     // Variables to store the current session and set
-    var currentSession: Option[Session] = None
     var currentSet: Option[Set] = None
   
     Behaviors.receiveMessage {
       case StartData(user, receivedTime, weight) =>
-        // Get the current session, waiting for the result
-        getSessionByUserAndDate(user, receivedTime.toLocalDate).onComplete {
-          case Success(session) =>
-            currentSession = session
-            // Get the current set, waiting for the result
-            getSetBySession(session.get.id).onComplete {
-              case Success(set) =>
-                currentSet = set
-                // Insert the start data into the database
-                insertStartData(session.get, set, machine, user, receivedTime, weight)
-              case Failure(exception) =>
-                println(s"Error: ${exception.getMessage}")
-            }
-          case Failure(exception) =>
-            println(s"Error: ${exception.getMessage}")
+        // Get latest session of the user
+        val session = Await.result(getLastSessionByUser(user), 1 seconds)
+        
+        session match {
+          case Some(s : Session) =>
+            // Insert the start data into the database
+            currentSet = insertStartData(s, machineID, user, receivedTime, weight)
+            Behaviors.same
+          case None =>
+            println("Error: No session found")
+            Behaviors.same
         }
-  
-  
-      case Data(user, distance, timer) =>
-        // Check if currentSession and currentSet are defined otherwise log an error
-        if (currentSession.isEmpty || currentSet.isEmpty) {
-          println("Error: currentSession or currentSet is not defined")
-        }
-        // Inserting the data into the database
-        insertData(user, distance, timer)
-  
-  
-      case EndData(user, reps, time) =>
-        // Inserting the data into the database
-        insertEndData(user, reps, time)
-    }
 
+
+      case Data(distance, timer) =>
+        // Inserting the data into the database
+        currentSet match {
+          case Some(s: Set) =>
+            insertData(s, distance, timer)
+            Behaviors.same
+          case None =>
+            println("Error: No set found")
+            Behaviors.same
+        }
+  
+  
+      case EndData(reps, time) =>
+        // Inserting the data into the database and stop the actor afterwards
+        currentSet match {
+          case Some(s: Set) =>
+            insertEndData(s, reps, time)
+            Behaviors.stopped
+          case None =>
+            println("Error: No set found")
+            Behaviors.stopped
+        }
+        
+    }
+  )
 }

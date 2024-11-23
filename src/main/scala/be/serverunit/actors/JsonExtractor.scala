@@ -5,12 +5,13 @@ import play.api.libs.json.*
 import java.time.LocalDateTime
 
 object JsonExtractor {
-  def extractStartData(json: JsValue): Option[(String, LocalDateTime)] = {
+  def extractStartData(json: JsValue): Option[(String, LocalDateTime, Int)] = {
     // Extracting the data from the json (user, timer) using a for comprehension
     for {
       user <- (json \ "user").asOpt[String]
       time <- (json \ "time").asOpt[LocalDateTime]
-    } yield (user, time)
+      weight <- (json \ "weight").asOpt[Int]
+    } yield (user, time, weight)
   }
 
   def extractData(json: JsValue): Option[(String, Int, Float)] = {

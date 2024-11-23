@@ -3,13 +3,16 @@ package be.serverunit.database
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import be.serverunit.actors.JsonExtractor.*
+import be.serverunit.actors.MachineActor
+import be.serverunit.actors.MachineActor.StartData
 import play.api.libs.json.*
 
+import java.time.LocalDateTime
 import scala.util.matching.Regex
 
 sealed trait DbMessage
 
-case class StartData(user: String, timer: Int) extends DbMessage
+
 
 case class Data(user: String, distance: Int, timer: Int) extends DbMessage
 
@@ -25,7 +28,7 @@ object DbActor {
   def apply(): Behavior[DbMessage] =
     Behaviors.setup(context =>
       // Structure to store actors
-      val actorsList = scala.collection.mutable.Map[Int, ActorRef[DbMessage]]()
+      val actorsList = scala.collection.mutable.Map[Int, akka.actor.typed.ActorRef[MachineActor.MachineMessage]]()
 
       Behaviors.receiveMessage {
         // When a message is received from the MqttActor, process it
@@ -39,13 +42,13 @@ object DbActor {
               val user = (json \ "user").as[String]
 
               // Convert the machineId to an integer
-              val machineId = machineId.toInt
+              val machineId: Int = machineId
 
               // Case match on type contained in json
               json \ "type" match {
                 case Some("START") =>
                   // Spawn a new actor for the machine and add it to the actorsList (give it a name)
-                  val machineActor = context.spawn(MachineActor(), "machine-" + machineId)
+                  val machineActor = context.spawn(MachineActor(machineId), s"machine-$machineId")
                   actorsList += (machineId -> machineActor)
 
                   // Send the data to the specific machine actor

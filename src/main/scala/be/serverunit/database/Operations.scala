@@ -1,43 +1,31 @@
 package be.serverunit.database
 
+import be.serverunit.database.BasicOperations.*
+
 import java.time.LocalDateTime
+import scala.concurrent.Await
+import scala.concurrent.duration.*
+import scala.language.postfixOps
 
 object Operations {
-  def insertStartData(currentSession: Session, currentSet: Option[Set], machineID: Int, userID: Long, time: LocalDateTime, weight: Int): Option[Set] = {
-      val newSet = currentSet match {
+  def insertStartData(currentSession: Session, machineID: Int, userID: String, time: LocalDateTime, weight: Int): Option[Set] = {
+    val latestSet = Await.result(getLastSetBySessionAndMachine(currentSession.id, machineID), 1 seconds)
+    
+    val newSet = latestSet match {
         case Some(set) =>
-          Set(set.id + 1, session.id, machineID, time, None, None, weight)
+          Set(set.id + 1, currentSession.id, machineID, time, None, None, weight)
         case None =>
-          Set(0, session.id, machineID, time, None, None, weight)
+          Set(0, currentSession.id, machineID, time, None, None, weight)
       }
-      Some(insertSet(newSet))
+    insertSet(newSet)
+    Some(newSet)
   }
   
-  def insertData(user: String, distance: Int, timer: Float, machine: Int): Unit = {
-    // Get the current set of the user based on the last session
-    val currentSession = getSessionByUser(user).map(_.headOption).flatten
-    val currentSet = getSetBySession(currentSession.get.id).map(_.headOption).flatten
-    
-    val latestRepetition = getRepetitionBySetAndSession(currentSet.get.id, currentSession.get.id).map(_.headOption).flatten
-    
-    latestRepetition match
-      case Some(repetition) =>
-        val repetitionNumber = repetition.number + 1
-        insertRepetition(Repetition(repetitionNumber, currentSet.get.id, timer, distance))
-      case None =>
-        insertRepetition(Repetition(0, currentSet.get.id, timer, distance))
-    
+  def insertData(currentSet: Set, distance: Int, timer: Int): Unit = {
+    val newRepetition = Repetition(0, currentSet.id, timer, distance)
+    insertRepetition(newRepetition)
   }
   
-  def insertEndData(user: String, reps: Int, time: Int, machine: Int): Unit = {
-    // Get the current set of the user based on the last session
-    val currentSession = getSessionByUser(user).map(_.headOption).flatten
-    val currentSet = getSetBySession(currentSession.get.id).map(_.headOption).flatten
-    
-    // Update the end date of the set
-    updateSet(currentSet.get.id, time)
-    
-    // Update the number of repetitions of the set
-    updateSetRepetitions(currentSet.get.id, reps)
+  def insertEndData(currentSet: Set, reps: Int, time: LocalDateTime): Unit = {
   }
 }

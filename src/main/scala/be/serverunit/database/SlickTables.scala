@@ -2,12 +2,14 @@ package be.serverunit.database
 
 import slick.jdbc.H2Profile.api.*
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
+
+import be.serverunit.database.Session
 
 object SlickTables {
 
   class Users(tag: Tag) extends Table[User](tag, "USERS") {
-    def id = column[Long]("USER_ID", O.PrimaryKey)
+    def id = column[String]("USER_ID", O.PrimaryKey)
 
     def username = column[String]("USERNAME")
 
@@ -22,7 +24,7 @@ object SlickTables {
   class Sessions(tag: Tag) extends Table[Session](tag, "SESSIONS") {
     def id = column[Long]("SESSION_ID", O.PrimaryKey, O.AutoInc)
 
-    def userID = column[Long]("USER_ID")
+    def userID = column[String]("USER_ID")
 
     def beginDate = column[LocalDateTime]("BEGIN_DATE")
 
@@ -38,7 +40,7 @@ object SlickTables {
   lazy val sessions = TableQuery[Sessions]
 
   class Sets(tag: Tag) extends Table[Set](tag, "SET") {
-    def id = column[Int]("SET_NUMBER")
+    def id = column[Int]("SET_ID", O.PrimaryKey)
 
     def sessionID = column[Long]("SESSION_ID")
 
@@ -53,12 +55,10 @@ object SlickTables {
     def weight = column[Float]("WEIGHT")
 
     def * = (id, sessionID, machineID, beginDate, endDate, repetition, weight).mapTo[Set]
-
-    // Composite Primary Key
-    def pk = primaryKey("PK_SET", (id, sessionID))
-
+    
     // Foreign key
     def session = foreignKey("SESSION_FK", sessionID, sessions)(_.id)
+    def machine = foreignKey("MACHINE_FK", machineID, machines)(_.machineID)
 
   }
   
@@ -75,24 +75,21 @@ object SlickTables {
   lazy val machines = TableQuery[Machines]
 
   class Repetitions(tag: Tag) extends Table[Repetition](tag, "REPETITIONS") {
-    def number = column[Int]("REPETITION_NUMBER")
+    def number = column[Int]("REPETITION_NUMBER", O.AutoInc)
 
     def setID = column[Int]("SET_ID")
     
-    def sessionID = column[Long]("SESSION_ID")
-
-    def timer = column[Float]("TIMER")
+    def timer = column[Int]("TIMER")
 
     def distance = column[Int]("DISTANCE")
 
-    def * = (number, setID, sessionID, timer, distance).mapTo[Repetition]
+    def * = (number, setID, timer, distance).mapTo[Repetition]
 
     // Composite primary key
-    def pk = primaryKey("PK_REPETITION", (number, setID, sessionID))
+    def pk = primaryKey("PK_REPETITION", (number, setID))
 
     // Foreign key
     def set = foreignKey("SET_FK", setID, sets)(_.id)
-    def session = foreignKey("SESSION_FK", sessionID, sessions)(_.id)
   }
 
   lazy val repetitions = TableQuery[Repetitions]
