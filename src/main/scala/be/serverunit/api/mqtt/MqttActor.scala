@@ -20,7 +20,7 @@ object MqttActor {
     implicit val executionContext: ExecutionContextExecutor = context.executionContext
 
     val connectionSettings = MqttConnectionSettings(
-      "tcp://192.168.2.227:1883",
+      "tcp://192.168.1.11:1883",
       "test-scala3-client",
       MemoryPersistence()
     )
@@ -31,7 +31,7 @@ object MqttActor {
     val mqttSource = RestartSource.withBackoff(restartSettings) { () =>
       MqttSource.atMostOnce(
         connectionSettings.withClientId("scala3-client"),
-        MqttSubscriptions(Map("bfscalabackend/machine/#" -> MqttQoS.AtLeastOnce, "topic2" -> MqttQoS.AtLeastOnce)),
+        MqttSubscriptions(Map("basic_frite/machine/#" -> MqttQoS.AtLeastOnce, "topic2" -> MqttQoS.AtLeastOnce)),
         bufferSize = 8
       )
     }
@@ -45,6 +45,8 @@ object MqttActor {
       // When a message is received from the MQTT source, forward it to the DbActor
       case message: MqttMessage =>
         val decodedPayload = new String(message.payload.toArray, "UTF-8")
+        println(s"Received message on topic ${message.topic}")
+        println(s"Payload: $decodedPayload")
         dbActor ! MqttData(message.topic, decodedPayload)
         Behaviors.same
     }

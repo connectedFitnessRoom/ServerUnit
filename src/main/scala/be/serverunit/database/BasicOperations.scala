@@ -45,7 +45,4 @@ object BasicOperations {
     db.run(repetitions += repetition)
   }
   
-  def getRepetitionBySetAndSession(setID: Int, sessionID: Long): Future[Seq[Repetition]] = {
-    db.run(repetitions.filter(r => r.setID === setID && r.sessionID === sessionID).result)
-  }
 }

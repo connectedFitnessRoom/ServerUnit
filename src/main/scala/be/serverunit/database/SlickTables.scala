@@ -16,7 +16,7 @@ object SlickTables {
     def password = column[String]("PASSWORD")
 
     // mapping function to case class
-    def * = (id, username).mapTo[User]
+    def * = (id, username, password).mapTo[User]
   }
 
   lazy val users = TableQuery[Users]

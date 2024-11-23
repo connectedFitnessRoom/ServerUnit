@@ -14,12 +14,12 @@ object JsonExtractor {
     } yield (user, time, weight)
   }
 
-  def extractData(json: JsValue): Option[(String, Int, Float)] = {
+  def extractData(json: JsValue): Option[(String, Int, Int)] = {
     // Extracting the data from the json (user, distance, timer) using a for comprehension
     for {
       user <- (json \ "user").asOpt[String]
       distance <- (json \ "distance").asOpt[Int]
-      timer <- (json \ "timer").asOpt[Float]
+      timer <- (json \ "timer").asOpt[Int]
     } yield (user, distance, timer)
   }
 

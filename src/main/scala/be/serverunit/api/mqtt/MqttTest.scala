@@ -1,11 +1,10 @@
-package be.serverunit.api.mqtt
+/*package be.serverunit.api.mqtt
 
 import akka.actor.ActorSystem
 import akka.stream.alpakka.mqtt.*
 import akka.stream.alpakka.mqtt.scaladsl.MqttSource
 import akka.stream.scaladsl.{Keep, RestartSource, Sink}
 import akka.stream.{Materializer, RestartSettings}
-import .processMachine
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 
 import scala.concurrent.ExecutionContext
@@ -62,7 +61,7 @@ def process(msg: MqttMessage): Unit = {
   }
 }
 
-/*
+
   val retrySource = RestartSource.withBackoff(restartSettings) { () =>
     mqttSource.map(msg => new String(msg.payload.toArray))
   }

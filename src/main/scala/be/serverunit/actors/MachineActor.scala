@@ -26,7 +26,7 @@ object MachineActor{
       case StartData(user, receivedTime, weight) =>
         // Get latest session of the user
         val session = Await.result(getLastSessionByUser(user), 1 seconds)
-        
+
         session match {
           case Some(s : Session) =>
             // Insert the start data into the database
@@ -60,7 +60,7 @@ object MachineActor{
             println("Error: No set found")
             Behaviors.stopped
         }
-        
+
     }
   )
 }
