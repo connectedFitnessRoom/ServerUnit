@@ -1,0 +1,33 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(__runWatch console0, Some(83657b52-e0be-4866-a612-453b9a06d8be), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(sbtStashOnFailure, None, Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(__preWatch console0, None, Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(run, None, Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / run[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 1 Scala source to /Users/xantin/IdeaProjects/BFScalaBackend/target/scala-3.3.4/classes ...[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E006] Not Found Error: /Users/xantin/IdeaProjects/BFScalaBackend/src/main/scala/be/bfscalabackend/database/Database.scala:3:7 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m3 |[0m[33mimport[0m slick.lifted.TableQuery[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m  |[0m       ^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m  |[0m       Not found: slick[0m
+[0m[[0m[31merror[0m] [0m[0m[31m  |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m  |[0m longer explanation available when compiling with `-explain`[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E006] Not Found Error: /Users/xantin/IdeaProjects/BFScalaBackend/src/main/scala/be/bfscalabackend/database/Database.scala:8:7 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m8 |[0m[33mimport[0m slick.jdbc.H2Profile.api.*[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m  |[0m       ^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m  |[0m       Not found: slick[0m
+[0m[[0m[31merror[0m] [0m[0m[31m  |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m  |[0m longer explanation available when compiling with `-explain`[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E081] Type Error: /Users/xantin/IdeaProjects/BFScalaBackend/src/main/scala/be/bfscalabackend/database/Database.scala:72:7 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m72 |[0m  ) { (s => s.setNumber, sessionID)} [0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m   |[0m       ^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m       Could not infer type for parameter s of anonymous function[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m       Expected type for the whole anonymous function: Any[0m
+[0m[[0m[31merror[0m] [0m[0mthree errors found[0m
+[0m[[0m[31merror[0m] [0m[0m(Compile / [31mcompileIncremental[0m) Compilation failed[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 0 s, completed 03 Nov 2024, 20:16:11[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(resumeFromFailure, None, Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(sbtPopOnFailure, None, Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(__postWatch console0, None, Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(resumeFromFailure, None, None)[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(__waitWatch console0, None, None)[0m
