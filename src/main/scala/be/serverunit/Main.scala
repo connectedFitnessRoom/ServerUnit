@@ -6,7 +6,7 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import be.serverunit.actors.{MachineManager, MqttActor}
-import be.serverunit.database.{DatabaseApp, PrintDB}
+import be.serverunit.database.{InitDatabase, PrintDB}
 import slick.jdbc.JdbcBackend.Database
 
 import scala.concurrent.Await
@@ -19,7 +19,7 @@ object Main extends App {
   val db = Database.forConfig("h2mem1")
 
   // Set up the database by running the schema creation and inserts
-  val setupFuture = DatabaseApp.setupDatabase(db)
+  val setupFuture = InitDatabase.setupDatabase(db)
 
   // Wait until the setup has been completed
   Await.result(setupFuture, Duration.Inf)

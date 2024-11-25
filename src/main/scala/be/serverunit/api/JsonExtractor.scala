@@ -14,22 +14,21 @@ object JsonExtractor {
     } yield (user, time, weight)
   }
 
-  def extractData(json: JsValue): Option[(String, Int, Int)] = {
+  def extractData(json: JsValue): Option[(Int, Int)] = {
     // Extracting the data from the json (user, distance, timer) using a for comprehension
     for {
-      user <- (json \ "user").asOpt[String]
       distance <- (json \ "distance").asOpt[Int]
       timer <- (json \ "timer").asOpt[Int]
-    } yield (user, distance, timer)
+    } yield (distance, timer)
   }
 
-  def extractEndData(json: JsValue): Option[(String, Int, LocalDateTime)] = {
+  def extractEndData(json: JsValue): Option[(Int, LocalDateTime)] = {
     // Extracting the data from the json (user, reps, time) using a for comprehension
     for {
       user <- (json \ "user").asOpt[String]
       reps <- (json \ "reps").asOpt[Int]
       time <- (json \ "time").asOpt[LocalDateTime]
-    } yield (user, reps, time)
+    } yield (reps, time)
   }
 
   def extractAirData(json: JsValue): Option[(Float, Float, Float, LocalDateTime)] = {

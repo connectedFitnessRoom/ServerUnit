@@ -4,7 +4,7 @@ import be.serverunit.database.SlickTables.*
 import slick.jdbc.H2Profile.api.*
 import be.serverunit.database.Session
 import slick.jdbc.JdbcBackend.Database
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 object BasicOperations {
   def insertSession(db: Database, session: Session): Future[Int] = {

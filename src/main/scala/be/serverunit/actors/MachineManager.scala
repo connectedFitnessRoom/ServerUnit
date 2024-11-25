@@ -1,16 +1,15 @@
 package be.serverunit.actors
 
 import akka.actor.typed.Behavior
-import akka.actor.typed.scaladsl.Behaviors
-import be.serverunit.actors.MachineActor
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import be.serverunit.actors.MachineActor.*
 import be.serverunit.api.JsonExtractor.*
 import play.api.libs.json.*
 import slick.jdbc.JdbcBackend.Database
 
 import java.time.LocalDateTime
+import scala.util.{Try, Success, Failure}
 import scala.util.matching.Regex
-
 
 
 object MachineManager {
@@ -18,98 +17,102 @@ object MachineManager {
   private val actorsList = scala.collection.mutable.Map[Int, akka.actor.typed.ActorRef[MachineActor.MachineMessage]]()
   private val machinePattern: Regex = "basic_frite/machine/(\\w+)/data".r
   private val airPattern: Regex = "basic_frite/air/".r
-  
-  sealed trait processMessage
-  case class MqttMessage(topic: String, payload: String) extends processMessage
 
-  def apply(db : Database): Behavior[processMessage] = Behaviors.setup { context =>
-
+  def apply(db: Database): Behavior[processMessage] = Behaviors.setup { context =>
     println("MachineManager started")
 
-    Behaviors.receiveMessage {
-      case MqttMessage(topic, payload) => {
-        println(s"Received message on topic $topic, I'm actor ${context.self.path.name}")
+    Behaviors.receiveMessage { case MqttMessage(topic, payload) => {
+      println(s"Received message on topic $topic, I'm actor ${context.self.path.name}")
 
-        // pattern matching on the topic
-        topic match {
-          case machinePattern(machine) => try {
-            val jsonReceived: JsValue = Json.parse(payload)
-            println(s"Received message on topic $topic, I'm actor ${context.self.path.name}") // Process the JSON as needed
-
-            // Extract the userID from the jsonReceived
-            val user = (jsonReceived \ "user").as[String]
-
-            // Convert the machineID to an integer
-            val machineID: Int = machine.toInt
-
-            // Case match on type contained in jsonReceived
-            (jsonReceived \ "type").asOpt[String] match {
-              case Some("START") => // Spawn a new actor for the machine and add it to the actorsList (give it a name)
-                val machineActor = context.spawn(MachineActor(machineID, db), s"machine-$machineID")
-                actorsList += (machineID -> machineActor)
-
-                // Send the data to the specific machine actor
-                extractStartData(jsonReceived) match {
-                  case Some((user, time, weight)) => machineActor ! StartData(user, time, weight)
-                    Behaviors.same
-                  case _ => println("Error extracting data")
-                    Behaviors.same
-                }
-              case Some("DATA") => // Send the data to the specific machine actor
-                actorsList.get(machineID) match {
-                  case Some(actor) => extractData(jsonReceived) match {
-                    case Some((user, distance, timer)) => // Inserting the data into the database
-                      actor ! Data(distance, timer)
-                      Behaviors.same
-                    case _ => println("Error extracting data")
-                      println(jsonReceived)
-                      Behaviors.same
-                  }
-                  case None => println("Error: Machine actor not found")
-                    Behaviors.same
-                }
-              case Some("END") => // Send the data to the specific machine actor
-                actorsList.get(machineID) match {
-                  case Some(actor) => extractEndData(jsonReceived) match {
-                    case Some((user, reps, time)) => // Inserting the data into the database
-                      actor ! EndData(reps, time)
-                      Behaviors.same
-                    case _ => println("Error extracting data")
-                      Behaviors.same
-                  }
-
-                    // Terminate the actor and remove it from the actorsList
-                    context.stop(actor)
-                    actorsList -= machineID
-
-                    Behaviors.same
-                  case None => println("Error: Machine actor not found")
-                    Behaviors.same
-                }
-              case None => println("Error: No type found")
-                Behaviors.same
-              case Some(_) => println("Error: Unknown type")
-                Behaviors.same
-            }
-          } catch {
-            case e: Exception => println(s"Error: $e")
-              Behaviors.same
-          }
-          case other => println(s"Unknown topic: $other")
+      // pattern matching on the topic
+      topic match {
+        case machinePattern(machine) => handleMachinePattern(payload, machine.toInt, context, db) match {
+          case Success(_) => Behaviors.same
+          case Failure(e) => println(s"Error handling machine pattern: $e")
             Behaviors.same
-
-          /*case airPattern() => extractAirData(jsonReceived) match {
-            case Some((temperature, humidity, pm, timestamp)) =>
-              // Inserting the data into the database
-              //insertAirData(temperature, humidity, pm, timestamp)
-              Behaviors.same
-            case _ =>
-              println("Error extracting data")
-              Behaviors.same*/
         }
+        case other => println(s"Unknown topic: $other")
+          Behaviors.same
+
+        /*case airPattern() => extractAirData(jsonReceived) match {
+          case Some((temperature, humidity, pm, timestamp)) =>
+            // Inserting the data into the database
+            //insertAirData(temperature, humidity, pm, timestamp)
+            Behaviors.same
+          case _ =>
+            println("Error extracting data")
+            Behaviors.same*/
+      }
+    }
+    }
+  }
+
+  private def handleMachinePattern(payload: String, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
+    val jsonReceived: JsValue = Json.parse(payload)
+
+    // Extract userID and type
+    val user = (jsonReceived \ "user").asOpt[String]
+    val messageType = (jsonReceived \ "type").asOpt[String]
+
+    (user, messageType) match {
+      case (Some(user), Some("START")) =>
+        handleStart(jsonReceived, machineID, context, db)
+      case (Some(user), Some("DATA")) =>
+        handleMachineData(jsonReceived, machineID, context, db)
+      case (Some(user), Some("END")) =>
+        handleEndData(jsonReceived, machineID, context, db)
+      case (Some(_), None) =>
+        Failure(new Exception("Invalid payload format: missing 'type'"))
+      case _ =>
+        Failure(new Exception("Invalid payload format"))
+    }
+  }
+
+  private def handleStart(jsonReceived: JsValue, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
+    actorsList.get(machineID) match {
+      case Some(_) =>
+        Failure(new Exception("Error: Machine actor already exists"))
+      case None => extractStartData(jsonReceived) match {
+        case Some((user, time, weight)) =>
+          val machineActor = context.spawn(MachineActor(machineID, db), s"machineActor$machineID")
+          actorsList += (machineID -> machineActor)
+          machineActor ! StartData(user, time, weight)
+          Success(())
+        case _ =>
+          Failure(new Exception("Error extracting data when handling start data"))
       }
     }
   }
+
+  private def handleMachineData(jsonReceived: JsValue, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
+    actorsList.get(machineID) match {
+      case Some(actor) => extractData(jsonReceived) match {
+        case Some((distance, timer)) =>
+          actor ! Data(distance, timer)
+          Success(())
+        case _ => Failure(new Exception("Error extracting data when handling machine data"))
+      }
+      case None => Failure(new Exception("Error: Machine actor not found"))
+    }
+  }
+
+  private def handleEndData(jsonReceived: JsValue, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
+    actorsList.get(machineID) match {
+      case Some(actor) => extractEndData(jsonReceived) match {
+        case Some((reps, time)) =>
+          actor ! EndData(reps, time)
+          context.stop(actor)
+          actorsList -= machineID
+          Success(())
+        case _ => Failure(new Exception("Error extracting data when handling end data"))
+      }
+      case None => Failure(new Exception("Error: Machine actor not found"))
+    }
+  }
+
+  sealed trait processMessage
+
+  case class MqttMessage(topic: String, payload: String) extends processMessage
 }
 
 

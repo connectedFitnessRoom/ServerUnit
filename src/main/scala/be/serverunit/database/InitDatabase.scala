@@ -5,7 +5,7 @@ import slick.jdbc.JdbcBackend.Database
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.{Success, Failure}
 
-object DatabaseApp {
+object InitDatabase {
   def setupDatabase(db: Database)(implicit ec: ExecutionContext): Future[Unit] = {
     val setup = for {
       // Create the tables, including primary and foreign keys

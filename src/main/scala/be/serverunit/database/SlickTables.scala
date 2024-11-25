@@ -2,8 +2,7 @@ package be.serverunit.database
 
 import slick.jdbc.H2Profile.api.*
 
-import java.time.{LocalDate, LocalDateTime}
-
+import java.time.LocalDateTime
 import be.serverunit.database.Session
 
 object SlickTables {
