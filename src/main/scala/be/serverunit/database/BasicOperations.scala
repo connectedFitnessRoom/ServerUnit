@@ -27,6 +27,10 @@ object BasicOperations {
     db.run(sets += set)
   }
   
+  def updateSet(db: Database, set: Set): Future[Int] = {
+    db.run(sets.filter(_.id === set.id).update(set))
+  }
+  
   def getSetBySession(db: Database, sessionID: Long): Future[Seq[Set]] = {
     db.run(sets.filter(_.sessionID === sessionID).result)
   }
@@ -37,6 +41,10 @@ object BasicOperations {
   
   def getLastSetBySessionAndMachine(db: Database, sessionID: Long, machineID: Int): Future[Option[Set]] = {
     db.run(sets.filter(s => s.sessionID === sessionID && s.machineID === machineID).result.headOption)
+  }
+  
+  def getLastSetBySession(db: Database, sessionID: Long): Future[Option[Set]] = {
+    db.run(sets.filter(_.sessionID === sessionID).sortBy(_.id.desc).result.headOption)
   }
 
   def insertRepetition(db: Database, repetition: Repetition): Future[Int] = {

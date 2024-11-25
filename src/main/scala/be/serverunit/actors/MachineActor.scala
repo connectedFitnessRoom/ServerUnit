@@ -7,8 +7,7 @@ import be.serverunit.database.BasicOperations.{getLastSessionByUser, getSessionB
 import be.serverunit.database.Operations.*
 
 import java.time.LocalDateTime
-import scala.concurrent.{Await, ExecutionContextExecutor}
-import scala.concurrent.duration.*
+import scala.concurrent.ExecutionContextExecutor
 import scala.language.postfixOps
 import slick.jdbc.JdbcBackend.Database
 
@@ -22,19 +21,18 @@ object MachineActor{
   case class EndData(reps: Int, time: LocalDateTime) extends MachineMessage
 
   def apply(machineID: Int, db: Database): Behavior[MachineMessage] = Behaviors.setup(context =>
-    // Variables to store the current session and set
     var currentSet: Option[Set] = None
     
     implicit val ec: ExecutionContextExecutor = context.executionContext
   
     Behaviors.receiveMessage {
       case StartData(user, receivedTime, weight) =>
-        // Get latest session of the user
-        val insertSession = getLastSessionByUser(db, user)
-        
-        insertSession.onComplete {
-          case Success(session) => currentSet = insertStartData(db, session.get, machineID, user, receivedTime, weight)
-          case Failure(e) => println(s"No session found: $e")
+
+        insertStartData(db, machineID, user, receivedTime, weight).onComplete {
+          case Success(Some(s)) =>
+            currentSet = Some(s)
+          case Failure(e) =>
+            println(s"Error: $e")
         }
         
         Behaviors.same
@@ -55,7 +53,7 @@ object MachineActor{
         // Inserting the data into the database and stop the actor afterwards
         currentSet match {
           case Some(s: Set) =>
-            insertEndData(s, reps, time)
+            insertEndData(db, s, reps, time)
             Behaviors.stopped
           case None =>
             println("Error: No set found")

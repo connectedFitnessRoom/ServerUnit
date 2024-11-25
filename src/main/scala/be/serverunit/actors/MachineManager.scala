@@ -21,7 +21,7 @@ object MachineManager {
   def apply(db: Database): Behavior[processMessage] = Behaviors.setup { context =>
     println("MachineManager started")
 
-    Behaviors.receiveMessage { case MqttMessage(topic, payload) => {
+    Behaviors.receiveMessage { case MqttMessage(topic, payload) =>
       println(s"Received message on topic $topic, I'm actor ${context.self.path.name}")
 
       // pattern matching on the topic
@@ -44,27 +44,28 @@ object MachineManager {
             Behaviors.same*/
       }
     }
-    }
   }
 
   private def handleMachinePattern(payload: String, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
-    val jsonReceived: JsValue = Json.parse(payload)
+    val jsonReceived: Try[JsValue] = Try(Json.parse(payload))
 
-    // Extract userID and type
-    val user = (jsonReceived \ "user").asOpt[String]
-    val messageType = (jsonReceived \ "type").asOpt[String]
+    jsonReceived match {
+      case Success(json) =>
+        val messageType = (json \ "type").asOpt[String]
 
-    (user, messageType) match {
-      case (Some(user), Some("START")) =>
-        handleStart(jsonReceived, machineID, context, db)
-      case (Some(user), Some("DATA")) =>
-        handleMachineData(jsonReceived, machineID, context, db)
-      case (Some(user), Some("END")) =>
-        handleEndData(jsonReceived, machineID, context, db)
-      case (Some(_), None) =>
-        Failure(new Exception("Invalid payload format: missing 'type'"))
-      case _ =>
-        Failure(new Exception("Invalid payload format"))
+        messageType match {
+          case Some("START") =>
+            handleStart(json, machineID, context, db)
+          case Some("DATA") =>
+            handleMachineData(json, machineID, context, db)
+          case Some("END") =>
+            handleEndData(json, machineID, context, db)
+          case None =>
+            Failure(new Exception("Invalid payload format: missing 'type'"))
+          case _ =>
+            Failure(new Exception("Invalid payload format"))
+        }
+      case Failure(e) => Failure(new Exception(s"Error parsing JSON: $e"))
     }
   }
 
@@ -74,6 +75,7 @@ object MachineManager {
         Failure(new Exception("Error: Machine actor already exists"))
       case None => extractStartData(jsonReceived) match {
         case Some((user, time, weight)) =>
+          println(s"Received data: user: $user, time: $time, weight: $weight")
           val machineActor = context.spawn(MachineActor(machineID, db), s"machineActor$machineID")
           actorsList += (machineID -> machineActor)
           machineActor ! StartData(user, time, weight)

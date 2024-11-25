@@ -34,16 +34,16 @@ object InitDatabase {
 
       // Insert sets using the correct sessionIds
       _ <- db.run(DBIO.seq(
-        SlickTables.sets += Set(0, sessionIds(0).id, 0, java.time.LocalDateTime.now(), None, None, 0),
+        SlickTables.sets += Set(0, sessionIds.head.id, 0, java.time.LocalDateTime.now(), None, None, 0),
         SlickTables.sets += Set(1, sessionIds(1).id, 1, java.time.LocalDateTime.now(), None, None, 0),
         SlickTables.sets += Set(2, sessionIds(2).id, 2, java.time.LocalDateTime.now(), None, None, 0)
       ))
 
-      // Insert repetitions
+      // Insert some repetitions
       _ <- db.run(DBIO.seq(
-        SlickTables.repetitions += Repetition(0, 0, 0, 0),
-        SlickTables.repetitions += Repetition(1, 1, 1, 1),
-        SlickTables.repetitions += Repetition(2, 2, 2, 2)
+        SlickTables.repetitions += Repetition(0, 1, 1, 0, 0, 0),
+        SlickTables.repetitions += Repetition(0, 2, 2, 1, 1, 1),
+        SlickTables.repetitions += Repetition(0, 3, 3, 2, 2, 2)
       ))
 
     } yield ()

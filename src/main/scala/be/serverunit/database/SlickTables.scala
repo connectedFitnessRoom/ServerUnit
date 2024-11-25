@@ -39,7 +39,7 @@ object SlickTables {
   lazy val sessions = TableQuery[Sessions]
 
   class Sets(tag: Tag) extends Table[Set](tag, "SET") {
-    def id = column[Int]("SET_ID", O.PrimaryKey)
+    def id = column[Int]("SET_ID", O.AutoInc)
 
     def sessionID = column[Long]("SESSION_ID")
 
@@ -49,11 +49,14 @@ object SlickTables {
 
     def endDate = column[Option[LocalDateTime]]("END_DATE")
 
-    def repetition = column[Option[Int]]("REPETITION")
+    def repetitions = column[Option[Int]]("REPETITION")
 
     def weight = column[Float]("WEIGHT")
 
-    def * = (id, sessionID, machineID, beginDate, endDate, repetition, weight).mapTo[Set]
+    def * = (id, sessionID, machineID, beginDate, endDate, repetitions, weight).mapTo[Set]
+    
+    // Composite primary key
+    def pk = primaryKey("PK_SET", (id, sessionID, machineID))
     
     // Foreign key
     def session = foreignKey("SESSION_FK", sessionID, sessions)(_.id)
@@ -78,17 +81,21 @@ object SlickTables {
 
     def setID = column[Int]("SET_ID")
     
+    def sessionID = column[Long]("SESSION_ID")
+    
+    def machineID = column[Int]("MACHINE_ID")
+    
     def timer = column[Int]("TIMER")
 
     def distance = column[Int]("DISTANCE")
 
-    def * = (number, setID, timer, distance).mapTo[Repetition]
+    def * = (number, setID, sessionID, machineID, timer, distance).mapTo[Repetition]
 
     // Composite primary key
     def pk = primaryKey("PK_REPETITION", (number, setID))
 
-    // Foreign key
-    def set = foreignKey("SET_FK", setID, sets)(_.id)
+    // Foreign key for the composite primary key
+    def set = foreignKey("SET_FK", (setID, sessionID, machineID), sets)(s => (s.id, s.sessionID, s.machineID))
   }
 
   lazy val repetitions = TableQuery[Repetitions]
