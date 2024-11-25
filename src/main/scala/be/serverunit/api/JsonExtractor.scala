@@ -1,4 +1,4 @@
-package be.serverunit.actors
+package be.serverunit.api
 
 import play.api.libs.json.*
 

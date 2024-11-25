@@ -29,7 +29,7 @@ object SlickTables {
     def beginDate = column[LocalDateTime]("BEGIN_DATE")
 
     // Nullable
-    def endDate = column[Option[LocalDate]]("END_DATE")
+    def endDate = column[Option[LocalDateTime]]("END_DATE")
 
     def * = (id, userID, beginDate, endDate).mapTo[Session]
 
@@ -46,9 +46,9 @@ object SlickTables {
 
     def machineID = column[Int]("MACHINE_ID")
 
-    def beginDate = column[LocalDate]("BEGIN_DATE")
+    def beginDate = column[LocalDateTime]("BEGIN_DATE")
 
-    def endDate = column[Option[LocalDate]]("END_DATE")
+    def endDate = column[Option[LocalDateTime]]("END_DATE")
 
     def repetition = column[Option[Int]]("REPETITION")
 
@@ -103,7 +103,7 @@ object SlickTables {
 
     def pm = column[Float]("PM")
 
-    def timestamp = column[LocalDate]("TIMESTAMP")
+    def timestamp = column[LocalDateTime]("TIMESTAMP")
 
     def * = (id, temperature, humidity, pm, timestamp).mapTo[AirQuality]
   }

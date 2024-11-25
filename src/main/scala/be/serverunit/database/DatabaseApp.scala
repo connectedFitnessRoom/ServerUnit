@@ -1,51 +1,57 @@
 package be.serverunit.database
 
-// Use H2Profile to connect to an H2 database
-
 import slick.jdbc.H2Profile.api.*
+import slick.jdbc.JdbcBackend.Database
+import scala.concurrent.{Future, ExecutionContext}
+import scala.util.{Success, Failure}
 
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
+object DatabaseApp {
+  def setupDatabase(db: Database)(implicit ec: ExecutionContext): Future[Unit] = {
+    val setup = for {
+      // Create the tables, including primary and foreign keys
+      _ <- db.run((SlickTables.users.schema ++ SlickTables.sessions.schema ++ SlickTables.sets.schema ++ SlickTables.machines.schema ++ SlickTables.repetitions.schema).create)
 
-object DatabaseApp extends App {
-  val db = Database.forConfig("h2mem1")
+      // Insert some users
+      _ <- db.run(DBIO.seq(
+        SlickTables.users += User("1", "Alice", "password"),
+        SlickTables.users += User("2", "Bob", "password"),
+        SlickTables.users += User("3", "Charlie", "password")
+      ))
 
-  val setup = DBIO.seq(
-    // Create the tables, including primary and foreign keys
-    (SlickTables.users.schema ++ SlickTables.sessions.schema ++ SlickTables.sets.schema ++ SlickTables.machines.schema ++ SlickTables.repetitions.schema).create,
+      // Insert some sessions and retrieve the auto-generated SESSION_IDs
+      sessionIds <- db.run(DBIO.seq(
+        SlickTables.sessions += Session(0, "1", java.time.LocalDateTime.now(), None),
+        SlickTables.sessions += Session(0, "2", java.time.LocalDateTime.now(), None),
+        SlickTables.sessions += Session(0, "3", java.time.LocalDateTime.now(), None)
+      ).flatMap(_ => SlickTables.sessions.result))
 
-    SlickTables.users += User("1", "Alice", "password"),
-    SlickTables.users += User("2", "Bob", "password"),
-    SlickTables.users += User("3", "Charlie", "password"),
+      // Insert machines
+      _ <- db.run(DBIO.seq(
+        SlickTables.machines += Machine(0, "Machine 1"),
+        SlickTables.machines += Machine(1, "Machine 2"),
+        SlickTables.machines += Machine(2, "Machine 3")
+      ))
 
-    // Insert some sessions (id, userID, beginDate, endDate)
-    SlickTables.sessions += Session(0, 1, java.time.LocalDateTime.now(), None),
-    SlickTables.sessions += Session(1, 2, java.time.LocalDateTime.now(), None),
-    SlickTables.sessions += Session(2, 3, java.time.LocalDateTime.now(), None),
+      // Insert sets using the correct sessionIds
+      _ <- db.run(DBIO.seq(
+        SlickTables.sets += Set(0, sessionIds(0).id, 0, java.time.LocalDateTime.now(), None, None, 0),
+        SlickTables.sets += Set(1, sessionIds(1).id, 1, java.time.LocalDateTime.now(), None, None, 0),
+        SlickTables.sets += Set(2, sessionIds(2).id, 2, java.time.LocalDateTime.now(), None, None, 0)
+      ))
 
-    // Insert some sets (id, sessionID, machineID, beginDate, endDate, repetition, weight)
-    SlickTables.sets += Set(0, 0, 0, java.time.LocalDateTime.now(), None, None, 0),
-    SlickTables.sets += Set(1, 1, 1, java.time.LocalDateTime.now(), None, None, 0),
-    SlickTables.sets += Set(2, 2, 2, java.time.LocalDateTime.now(), None, None, 0),
+      // Insert repetitions
+      _ <- db.run(DBIO.seq(
+        SlickTables.repetitions += Repetition(0, 0, 0, 0),
+        SlickTables.repetitions += Repetition(1, 1, 1, 1),
+        SlickTables.repetitions += Repetition(2, 2, 2, 2)
+      ))
 
-    // Insert some machines (machineID, machineName)
-    SlickTables.machines += Machine(0, "Machine 1"),
-    SlickTables.machines += Machine(1, "Machine 2"),
-    SlickTables.machines += Machine(2, "Machine 3"),
+    } yield ()
 
-    // Insert some repetitions (number, setID, timer, distance)
-    SlickTables.repetitions += Repetition(0, 0, 0, 0),
-    SlickTables.repetitions += Repetition(1, 1, 1, 1),
-    SlickTables.repetitions += Repetition(2, 2, 2, 2)
-  
-  )
-
-  val setupFuture = db.run(setup)
-
-  // Wait until the setup has been completed
-  Await.result(setupFuture, scala.concurrent.duration.Duration.Inf)
-
-  db.close()
-
+    setup.transform {
+      case Success(_) => Success(())
+      case Failure(ex) => Failure(new Exception("Database setup failed", ex))
+    }
+  }
 }
 

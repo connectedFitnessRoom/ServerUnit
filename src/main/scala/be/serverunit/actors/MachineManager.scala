@@ -1,31 +1,33 @@
-package be.serverunit.database
+package be.serverunit.actors
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import be.serverunit.actors.JsonExtractor.*
 import be.serverunit.actors.MachineActor
 import be.serverunit.actors.MachineActor.*
+import be.serverunit.api.JsonExtractor.*
 import play.api.libs.json.*
+import slick.jdbc.JdbcBackend.Database
 
 import java.time.LocalDateTime
 import scala.util.matching.Regex
 
-sealed trait DbMessage
 
-case class MqttData(topic: String, payload: String) extends DbMessage
 
-object DbActor {
+object MachineManager {
 
-  val actorsList = scala.collection.mutable.Map[Int, akka.actor.typed.ActorRef[MachineActor.MachineMessage]]()
+  private val actorsList = scala.collection.mutable.Map[Int, akka.actor.typed.ActorRef[MachineActor.MachineMessage]]()
   private val machinePattern: Regex = "basic_frite/machine/(\\w+)/data".r
   private val airPattern: Regex = "basic_frite/air/".r
+  
+  sealed trait processMessage
+  case class MqttMessage(topic: String, payload: String) extends processMessage
 
-  def apply(): Behavior[DbMessage] = Behaviors.setup(context => // Structure to store actors
+  def apply(db : Database): Behavior[processMessage] = Behaviors.setup { context =>
 
-    println("DbActor started")
+    println("MachineManager started")
 
-    Behaviors.receiveMessage { // When a message is received from the MqttActor, process it
-      case MqttData(topic, payload) => {
+    Behaviors.receiveMessage {
+      case MqttMessage(topic, payload) => {
         println(s"Received message on topic $topic, I'm actor ${context.self.path.name}")
 
         // pattern matching on the topic
@@ -43,7 +45,7 @@ object DbActor {
             // Case match on type contained in jsonReceived
             (jsonReceived \ "type").asOpt[String] match {
               case Some("START") => // Spawn a new actor for the machine and add it to the actorsList (give it a name)
-                val machineActor = context.spawn(MachineActor(machineID), s"machine-$machineID")
+                val machineActor = context.spawn(MachineActor(machineID, db), s"machine-$machineID")
                 actorsList += (machineID -> machineActor)
 
                 // Send the data to the specific machine actor
@@ -60,6 +62,7 @@ object DbActor {
                       actor ! Data(distance, timer)
                       Behaviors.same
                     case _ => println("Error extracting data")
+                      println(jsonReceived)
                       Behaviors.same
                   }
                   case None => println("Error: Machine actor not found")
@@ -105,7 +108,8 @@ object DbActor {
               Behaviors.same*/
         }
       }
-    })
+    }
+  }
 }
 
 

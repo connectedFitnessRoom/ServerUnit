@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 case class User(uuid: String, username: String, password: String)
 
-case class Session(id: Long, userID: Long, beginDate: LocalDateTime, endDate: Option[LocalDateTime])
+case class Session(id: Long, userID: String, beginDate: LocalDateTime, endDate: Option[LocalDateTime])
 
 case class Set(id: Int, sessionID: Long, machineID: Int, beginDate: LocalDateTime, endDate: Option[LocalDateTime], repetition: Option[Int], weight: Float)
 

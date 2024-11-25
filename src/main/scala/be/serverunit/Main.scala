@@ -5,23 +5,29 @@ import akka.actor.typed.ActorRef
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import be.serverunit.api.mqtt.MqttActor
-import be.serverunit.database.DbActor
+import be.serverunit.actors.{MachineManager, MqttActor}
+import be.serverunit.database.{DatabaseApp, PrintDB}
+import slick.jdbc.JdbcBackend.Database
 
-object Main {
-  def apply(): Behavior[NotUsed] =
-    Behaviors.setup { context =>
-      val dbActor = context.spawn(DbActor(), "db-actor")
-      val mqttActor = context.spawn(MqttActor(dbActor), "mqtt-actor")
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
 
-      // Define a behavior that keeps the system alive
-      Behaviors.receiveSignal {
-        case (_, akka.actor.typed.Terminated(_)) =>
-          Behaviors.stopped
-      }
-    }
+object Main extends App {
+  implicit val system: ActorSystem[NotUsed] = ActorSystem(Behaviors.empty, "serverunit")
 
-  def main(args: Array[String]): Unit = {
-    ActorSystem(Main(), "BFScalaBackend")
-  }
+  val db = Database.forConfig("h2mem1")
+
+  // Set up the database by running the schema creation and inserts
+  val setupFuture = DatabaseApp.setupDatabase(db)
+
+  // Wait until the setup has been completed
+  Await.result(setupFuture, Duration.Inf)
+  
+  // Print the contents of the database
+  PrintDB.printDatabaseContents(db)
+
+  val machineManager: ActorRef[MachineManager.processMessage] = system.systemActorOf(MachineManager(db), "machineManager")
+  val mqttActor: ActorRef[MqttActor.MqttMessage] = system.systemActorOf(MqttActor(machineManager), "mqttActor")
+
 }

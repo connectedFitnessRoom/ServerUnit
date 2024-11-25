@@ -1,4 +1,4 @@
-package be.serverunit.api.mqtt
+package be.serverunit.actors
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
@@ -6,7 +6,6 @@ import akka.stream.alpakka.mqtt.*
 import akka.stream.alpakka.mqtt.scaladsl.MqttSource
 import akka.stream.scaladsl.{Keep, RestartSource, Sink}
 import akka.stream.{Materializer, RestartSettings}
-import be.serverunit.database.MqttData
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 
 import scala.concurrent.ExecutionContextExecutor
@@ -14,13 +13,15 @@ import scala.concurrent.duration.DurationInt
 
 
 object MqttActor {
-
-  def apply(dbActor: ActorRef[MqttData]): Behavior[MqttMessage] = Behaviors.setup { context =>
+  sealed trait MqttMessage
+  private case class MqttData(topic: String, payload: String) extends MqttMessage
+  
+  def apply(machineManager: ActorRef[MachineManager.processMessage]): Behavior[MqttMessage] = Behaviors.setup { context =>
     implicit val materializer: Materializer = Materializer(context.system)
     implicit val executionContext: ExecutionContextExecutor = context.executionContext
 
     val connectionSettings = MqttConnectionSettings(
-      "tcp://192.168.1.11:1883",
+      "tcp://192.168.2.227:1883",
       "test-scala3-client",
       MemoryPersistence()
     )
@@ -36,18 +37,21 @@ object MqttActor {
       )
     }
 
+    // Run the MQTT source
     val (control, future) = mqttSource
-      .toMat(Sink.foreach(message => context.self ! message))(Keep.both)
+      .map { mqttMessage =>
+        // Transform the Alpakka MqttMessage into MqttActor.MqttMessage
+        MqttData(mqttMessage.topic, mqttMessage.payload.utf8String)
+      }
+      .toMat(Sink.foreach { mqttData =>
+        context.self ! mqttData // Send the transformed message to itself
+      })(Keep.both)
       .run()
 
 
     Behaviors.receiveMessage {
-      // When a message is received from the MQTT source, forward it to the DbActor
-      case message: MqttMessage =>
-        val decodedPayload = new String(message.payload.toArray, "UTF-8")
-        println(s"Received message on topic ${message.topic}")
-        println(s"Payload: $decodedPayload")
-        dbActor ! MqttData(message.topic, decodedPayload)
+      case MqttData(topic, payload) =>
+        machineManager ! MachineManager.MqttMessage(topic, payload)
         Behaviors.same
     }
   }
