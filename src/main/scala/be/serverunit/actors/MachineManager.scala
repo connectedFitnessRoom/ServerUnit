@@ -8,15 +8,15 @@ import play.api.libs.json.*
 import slick.jdbc.JdbcBackend.Database
 
 import java.time.LocalDateTime
-import scala.util.{Try, Success, Failure}
 import scala.util.matching.Regex
+import scala.util.{Failure, Success, Try}
 
 
 object MachineManager {
 
   private val actorsList = scala.collection.mutable.Map[Int, akka.actor.typed.ActorRef[MachineActor.MachineMessage]]()
   private val machinePattern: Regex = "basic_frite/machine/(\\w+)/data".r
-  private val airPattern: Regex = "basic_frite/air/".r
+  private val airPattern: Regex = "AetherGuard/sensordata".r
 
   def apply(db: Database): Behavior[processMessage] = Behaviors.setup { context =>
     println("MachineManager started")
@@ -31,17 +31,20 @@ object MachineManager {
           case Failure(e) => println(s"Error handling machine pattern: $e")
             Behaviors.same
         }
+
+        case airPattern() =>
+          println(s"Received air data : $payload")
+          Behaviors.same
+        /*extractAirData(payload) match {
+        case Some((temperature, humidity, pm, timestamp)) =>
+          // Inserting the data into the database
+          //insertAirData(temperature, humidity, pm, timestamp)
+          Behaviors.same
+        case _ =>
+          println("Error extracting data")
+          Behaviors.same*/
         case other => println(s"Unknown topic: $other")
           Behaviors.same
-
-        /*case airPattern() => extractAirData(jsonReceived) match {
-          case Some((temperature, humidity, pm, timestamp)) =>
-            // Inserting the data into the database
-            //insertAirData(temperature, humidity, pm, timestamp)
-            Behaviors.same
-          case _ =>
-            println("Error extracting data")
-            Behaviors.same*/
       }
     }
   }
@@ -49,23 +52,14 @@ object MachineManager {
   private def handleMachinePattern(payload: String, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
     val jsonReceived: Try[JsValue] = Try(Json.parse(payload))
 
-    jsonReceived match {
-      case Success(json) =>
-        val messageType = (json \ "type").asOpt[String]
-
-        messageType match {
-          case Some("START") =>
-            handleStart(json, machineID, context, db)
-          case Some("DATA") =>
-            handleMachineData(json, machineID, context, db)
-          case Some("END") =>
-            handleEndData(json, machineID, context, db)
-          case None =>
-            Failure(new Exception("Invalid payload format: missing 'type'"))
-          case _ =>
-            Failure(new Exception("Invalid payload format"))
-        }
-      case Failure(e) => Failure(new Exception(s"Error parsing JSON: $e"))
+    jsonReceived.flatMap { json =>
+      (json \ "type").asOpt[String] match {
+        case Some("START") => handleStart(json, machineID, context, db)
+        case Some("DATA") => handleMachineData(json, machineID, context, db)
+        case Some("END") => handleEndData(json, machineID, context, db)
+        case None => Failure(new Exception("Invalid payload format: missing 'type'"))
+        case _ => Failure(new Exception("Invalid payload type"))
+      }
     }
   }
 

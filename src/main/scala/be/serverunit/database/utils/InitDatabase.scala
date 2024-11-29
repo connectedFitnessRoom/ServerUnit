@@ -1,9 +1,11 @@
-package be.serverunit.database
+package be.serverunit.database.utils
 
+import be.serverunit.database.{Machine, Repetition, Session, Set, SlickTables, User}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
-import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Success, Failure}
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 object InitDatabase {
   def setupDatabase(db: Database)(implicit ec: ExecutionContext): Future[Unit] = {
@@ -41,9 +43,9 @@ object InitDatabase {
 
       // Insert some repetitions
       _ <- db.run(DBIO.seq(
-        SlickTables.repetitions += Repetition(0, 1, 1, 0, 0, 0),
-        SlickTables.repetitions += Repetition(0, 2, 2, 1, 1, 1),
-        SlickTables.repetitions += Repetition(0, 3, 3, 2, 2, 2)
+        SlickTables.repetitions += Repetition(1, 0, 0),
+        SlickTables.repetitions += Repetition(2, 0, 0),
+        SlickTables.repetitions += Repetition(3, 0, 0)
       ))
 
     } yield ()

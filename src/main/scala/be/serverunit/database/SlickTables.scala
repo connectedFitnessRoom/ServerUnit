@@ -1,49 +1,50 @@
 package be.serverunit.database
 
+import be.serverunit.database.Session
 import slick.jdbc.H2Profile.api.*
 
 import java.time.LocalDateTime
-import be.serverunit.database.Session
 
 object SlickTables {
 
+  lazy val users = TableQuery[Users]
+  lazy val sessions = TableQuery[UserSessions]
+  lazy val sets = TableQuery[Sets]
+  lazy val machines = TableQuery[Machines]
+  lazy val repetitions = TableQuery[Repetitions]
+  lazy val airQualities = TableQuery[AirQualities]
+
   class Users(tag: Tag) extends Table[User](tag, "USERS") {
+    // mapping function to case class
+    def * = (id, username, password).mapTo[User]
+
     def id = column[String]("USER_ID", O.PrimaryKey)
 
     def username = column[String]("USERNAME")
 
     def password = column[String]("PASSWORD")
-
-    // mapping function to case class
-    def * = (id, username, password).mapTo[User]
   }
 
-  lazy val users = TableQuery[Users]
+  class UserSessions(tag: Tag) extends Table[Session](tag, "SESSIONS") {
+    // Mapping the case class Session to the columns
+    def * = (id, userID, beginDate, endDate).mapTo[Session]
 
-  class Sessions(tag: Tag) extends Table[Session](tag, "SESSIONS") {
     def id = column[Long]("SESSION_ID", O.PrimaryKey, O.AutoInc)
-
-    def userID = column[String]("USER_ID")
 
     def beginDate = column[LocalDateTime]("BEGIN_DATE")
 
-    // Nullable
     def endDate = column[Option[LocalDateTime]]("END_DATE")
 
-    def * = (id, userID, beginDate, endDate).mapTo[Session]
-
-    // Foreign key
+    // Foreign key relationship
     def user = foreignKey("USER_FK", userID, users)(_.id)
+
+    def userID = column[String]("USER_ID")
   }
 
-  lazy val sessions = TableQuery[Sessions]
-
   class Sets(tag: Tag) extends Table[Set](tag, "SET") {
-    def id = column[Int]("SET_ID", O.AutoInc)
+    def * = (id, sessionID, machineID, beginDate, endDate, repetitions, weight).mapTo[Set]
 
-    def sessionID = column[Long]("SESSION_ID")
-
-    def machineID = column[Int]("MACHINE_ID")
+    def id = column[Long]("SET_ID", O.AutoInc, O.PrimaryKey)
 
     def beginDate = column[LocalDateTime]("BEGIN_DATE")
 
@@ -53,54 +54,45 @@ object SlickTables {
 
     def weight = column[Float]("WEIGHT")
 
-    def * = (id, sessionID, machineID, beginDate, endDate, repetitions, weight).mapTo[Set]
-    
-    // Composite primary key
-    def pk = primaryKey("PK_SET", (id, sessionID, machineID))
-    
     // Foreign key
     def session = foreignKey("SESSION_FK", sessionID, sessions)(_.id)
+
+    def sessionID = column[Long]("SESSION_ID")
+
     def machine = foreignKey("MACHINE_FK", machineID, machines)(_.machineID)
 
+    def machineID = column[Int]("MACHINE_ID")
+
   }
-  
-  lazy val sets = TableQuery[Sets]
 
   class Machines(tag: Tag) extends Table[Machine](tag, "MACHINES") {
+    def * = (machineID, machineName).mapTo[Machine]
+
     def machineID = column[Int]("MACHINE_ID", O.PrimaryKey)
 
     def machineName = column[String]("MACHINE_NAME")
-
-    def * = (machineID, machineName).mapTo[Machine]
   }
 
-  lazy val machines = TableQuery[Machines]
-
   class Repetitions(tag: Tag) extends Table[Repetition](tag, "REPETITIONS") {
-    def number = column[Int]("REPETITION_NUMBER", O.AutoInc)
-
-    def setID = column[Int]("SET_ID")
-    
-    def sessionID = column[Long]("SESSION_ID")
-    
-    def machineID = column[Int]("MACHINE_ID")
-    
-    def timer = column[Int]("TIMER")
+    def * = (setID, timer, distance).mapTo[Repetition]
 
     def distance = column[Int]("DISTANCE")
 
-    def * = (number, setID, sessionID, machineID, timer, distance).mapTo[Repetition]
-
     // Composite primary key
-    def pk = primaryKey("PK_REPETITION", (number, setID))
+    def pk = primaryKey("REP_PK", (setID, timer))
 
-    // Foreign key for the composite primary key
-    def set = foreignKey("SET_FK", (setID, sessionID, machineID), sets)(s => (s.id, s.sessionID, s.machineID))
+    def setID = column[Long]("SET_ID")
+
+    def timer = column[Float]("TIMER")
+
+    // Foreign key
+    def set = foreignKey("SET_FK", setID, sets)(_.id)
+
   }
 
-  lazy val repetitions = TableQuery[Repetitions]
-
   class AirQualities(tag: Tag) extends Table[AirQuality](tag, "AIR_QUALITY") {
+    def * = (id, temperature, humidity, pm, timestamp).mapTo[AirQuality]
+
     def id = column[Long]("AIR_QUALITY_ID", O.PrimaryKey)
 
     def temperature = column[Float]("TEMPERATURE")
@@ -110,9 +102,5 @@ object SlickTables {
     def pm = column[Float]("PM")
 
     def timestamp = column[LocalDateTime]("TIMESTAMP")
-
-    def * = (id, temperature, humidity, pm, timestamp).mapTo[AirQuality]
   }
-
-  lazy val airQualities = TableQuery[AirQualities]
 }

@@ -1,12 +1,12 @@
-package be.serverunit.database
+package be.serverunit.database.utils
 
+import be.serverunit.database.{Machine, Repetition, Session, Set, SlickTables, User}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
-import be.serverunit.database.Session
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 object PrintDB {
   def printDatabaseContents(db: Database): Unit = {

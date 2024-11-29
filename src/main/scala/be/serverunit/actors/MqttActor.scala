@@ -13,9 +13,6 @@ import scala.concurrent.duration.DurationInt
 
 
 object MqttActor {
-  sealed trait MqttMessage
-  private case class MqttData(topic: String, payload: String) extends MqttMessage
-  
   def apply(machineManager: ActorRef[MachineManager.processMessage]): Behavior[MqttMessage] = Behaviors.setup { context =>
     implicit val materializer: Materializer = Materializer(context.system)
     implicit val executionContext: ExecutionContextExecutor = context.executionContext
@@ -32,7 +29,7 @@ object MqttActor {
     val mqttSource = RestartSource.withBackoff(restartSettings) { () =>
       MqttSource.atMostOnce(
         connectionSettings.withClientId("scala3-client"),
-        MqttSubscriptions(Map("basic_frite/machine/#" -> MqttQoS.AtLeastOnce, "topic2" -> MqttQoS.AtLeastOnce)),
+        MqttSubscriptions(Map("basic_frite/machine/#" -> MqttQoS.AtLeastOnce, "AetherGuard/sensordata" -> MqttQoS.AtLeastOnce)),
         bufferSize = 8
       )
     }
@@ -55,4 +52,8 @@ object MqttActor {
         Behaviors.same
     }
   }
+
+  sealed trait MqttMessage
+
+  private case class MqttData(topic: String, payload: String) extends MqttMessage
 }
