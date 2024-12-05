@@ -1,7 +1,7 @@
 package be.serverunit.database.operations
 
 import be.serverunit.database.SlickTables.*
-import be.serverunit.database.{Air, Repetition, UserSession, Set}
+import be.serverunit.database.{Air, Repetition, Set, UserSession}
 import be.serverunit.traits.database.{AirOperations, RepetitionOperations, SessionOperations, SetOperations}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
@@ -28,10 +28,10 @@ object Basic extends SessionOperations with SetOperations with RepetitionOperati
   override def insertRepetition(db: Database, repetition: Repetition): Future[Int] = {
     db.run(repetitions += repetition)
   }
-  
+
   // Air operations
   def insertAirQuality(db: Database, air: Air): Future[Int] = {
     db.run(airs += air)
   }
-  
+
 }

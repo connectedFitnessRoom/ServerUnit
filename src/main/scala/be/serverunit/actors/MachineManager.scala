@@ -101,7 +101,7 @@ object MachineManager {
       case None => Failure(new Exception("Error: Machine actor not found"))
     }
   }
-  
+
   private def handleAirData(payload: String, context: ActorContext[processMessage], db: Database): Try[Unit] = {
     val jsonReceived: Try[JsValue] = Try(Json.parse(payload))
 

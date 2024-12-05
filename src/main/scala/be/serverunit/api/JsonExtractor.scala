@@ -2,8 +2,8 @@ package be.serverunit.api
 
 import play.api.libs.json.*
 
-import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
+import java.time.{Instant, LocalDateTime, ZoneOffset}
 
 object JsonExtractor {
   def extractStartData(json: JsValue): Option[(String, Instant, Int)] = {

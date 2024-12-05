@@ -1,6 +1,6 @@
 package be.serverunit.database.utils
 
-import be.serverunit.database.{Machine, Repetition, UserSession, Set, SlickTables, User, Air}
+import be.serverunit.database.{Air, Machine, Repetition, Set, SlickTables, User, UserSession}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
 

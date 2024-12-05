@@ -1,6 +1,5 @@
 package be.serverunit.database
 
-import be.serverunit.database.UserSession
 import slick.jdbc.H2Profile.api.*
 
 import java.time.Instant

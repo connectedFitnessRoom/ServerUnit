@@ -17,6 +17,14 @@ object HttpFetch {
     }
   }
 
+  def fetchMeanExerciseTimeByYear(db: Database, userID: String, year: Int)(implicit ec: ExecutionContext): Future[String] = {
+    fetchMeanExerciseTime(db, userID, year, "year")
+  }
+
+  def fetchMeanExerciseTimeByMonth(db: Database, userID: String, year: Int, month: Int)(implicit ec: ExecutionContext): Future[String] = {
+    fetchMeanExerciseTime(db, userID, year, "month", Some(month))
+  }
+
   private def fetchMeanExerciseTime(db: Database, userID: String, year: Int, period: String, month: Option[Int] = None, week: Option[Int] = None)(implicit ec: ExecutionContext): Future[String] = {
     val futures = period match {
       case "year" => (1 to 12).map(m => getMeanExerciseTime(db, userID, year, Some(m)))
@@ -32,6 +40,14 @@ object HttpFetch {
     }
   }
 
+  def fetchMeanExerciseTimeByWeek(db: Database, userID: String, year: Int, month: Int, week: Int)(implicit ec: ExecutionContext): Future[String] = {
+    fetchMeanExerciseTime(db, userID, year, "week", Some(month), Some(week))
+  }
+
+  def fetchNumberOfSessionsByYear(db: Database, userID: String, year: Int)(implicit ec: ExecutionContext): Future[String] = {
+    fetchNumberOfSessions(db, userID, year, "year")
+  }
+
   private def fetchNumberOfSessions(db: Database, userID: String, year: Int, period: String, month: Option[Int] = None, week: Option[Int] = None)(implicit ec: ExecutionContext): Future[String] = {
     val futures = period match {
       case "year" => (1 to 12).map(m => getNumberOfSessions(db, userID, year, Some(m)))
@@ -45,22 +61,6 @@ object HttpFetch {
       val count = counts.flatten.sum
       period.toJson(year, month, week, Some(count), counts.flatten)
     }
-  }
-
-  def fetchMeanExerciseTimeByYear(db: Database, userID: String, year: Int)(implicit ec: ExecutionContext): Future[String] = {
-    fetchMeanExerciseTime(db, userID, year, "year")
-  }
-
-  def fetchMeanExerciseTimeByMonth(db: Database, userID: String, year: Int, month: Int)(implicit ec: ExecutionContext): Future[String] = {
-    fetchMeanExerciseTime(db, userID, year, "month", Some(month))
-  }
-
-  def fetchMeanExerciseTimeByWeek(db: Database, userID: String, year: Int, month: Int, week: Int)(implicit ec: ExecutionContext): Future[String] = {
-    fetchMeanExerciseTime(db, userID, year, "week", Some(month), Some(week))
-  }
-
-  def fetchNumberOfSessionsByYear(db: Database, userID: String, year: Int)(implicit ec: ExecutionContext): Future[String] = {
-    fetchNumberOfSessions(db, userID, year, "year")
   }
 
   def fetchNumberOfSessionsByMonth(db: Database, userID: String, year: Int, month: Int)(implicit ec: ExecutionContext): Future[String] = {

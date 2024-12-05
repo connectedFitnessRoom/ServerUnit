@@ -1,12 +1,11 @@
 package be.serverunit.database.utils
 
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-
-import be.serverunit.database.{Air, Machine, Repetition, UserSession, Set, SlickTables, User}
+import be.serverunit.database.{Air, Machine, Repetition, Set, SlickTables, User, UserSession}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 

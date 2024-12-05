@@ -1,11 +1,11 @@
 package be.serverunit.actors
 
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorSystem, Behavior}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.Directives.*
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.http.scaladsl.model.*
+import akka.http.scaladsl.server.Directives.*
+import akka.http.scaladsl.server.Route
 import akka.stream.{Materializer, SystemMaterializer}
 import be.serverunit.api.HttpFetch.*
 import slick.jdbc.JdbcBackend.Database
@@ -15,9 +15,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 object HttpActor {
-  sealed trait Command
-  case object StartHttpServer extends Command
-
   def apply(db: Database): Behavior[Command] = Behaviors.setup { context =>
     Behaviors.receiveMessage {
       case StartHttpServer =>
@@ -48,13 +45,6 @@ object HttpActor {
     }
   }
 
-  private def completeWithFetch(fetch: => Future[String])(implicit ec: ExecutionContext): Route = {
-    onComplete(fetch) {
-      case Success(result) => complete(HttpEntity(ContentTypes.`application/json`, result))
-      case Failure(ex) => complete(StatusCodes.InternalServerError -> s"Failed: ${ex.getMessage}")
-    }
-  }
-
   private def handleSessionRequest(db: Database)(frequency: String, userID: String, date: String)(implicit ec: ExecutionContext): Route = {
     val dateTime = LocalDateTime.parse(date)
     val future: Future[String] = frequency match {
@@ -74,4 +64,15 @@ object HttpActor {
     }
     completeWithFetch(future)
   }
+
+  private def completeWithFetch(fetch: => Future[String])(implicit ec: ExecutionContext): Route = {
+    onComplete(fetch) {
+      case Success(result) => complete(HttpEntity(ContentTypes.`application/json`, result))
+      case Failure(ex) => complete(StatusCodes.InternalServerError -> s"Failed: ${ex.getMessage}")
+    }
+  }
+
+  sealed trait Command
+
+  case object StartHttpServer extends Command
 }
