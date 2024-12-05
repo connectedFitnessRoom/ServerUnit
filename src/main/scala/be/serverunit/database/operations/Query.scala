@@ -19,12 +19,11 @@ object Query {
     db.run(query)
   }
 
+  private def extractYear(date: Rep[java.time.Instant]) = SimpleFunction.unary[java.time.Instant, Int]("YEAR").apply(date)
+  private def extractMonth(date: Rep[java.time.Instant]) = SimpleFunction.unary[java.time.Instant, Int]("MONTH").apply(date)
+  private def extractDay(date: Rep[java.time.Instant]) = SimpleFunction.unary[java.time.Instant, Int]("DAY").apply(date)
+
   private def filterSessions(userID: String, year: Int, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None) = {
-    val extractYear = SimpleFunction.unary[java.time.Instant, Int]("YEAR")
-    val extractMonth = SimpleFunction.unary[java.time.Instant, Int]("MONTH")
-    val extractDay = SimpleFunction.unary[java.time.Instant, Int]("DAY")
-
-
     sessions.filter { session =>
       val yearMatch = extractYear(session.beginDate) === year
       val monthMatch = month.map(m => extractMonth(session.beginDate) === m: Rep[Boolean]).getOrElse(true: Rep[Boolean])
@@ -51,7 +50,6 @@ object Query {
 
     db.run(setsQuery).map { sets =>
       val times = sets.collect { case (beginDate, Some(endDate)) =>
-        println(s"beginDate: $beginDate, endDate: $endDate")
         java.time.Duration.between(beginDate, endDate).getSeconds
       }
 

@@ -10,13 +10,10 @@ object HttpFetch {
 
   def fetchAirQuality(db: Database)(implicit ec: ExecutionContext): Future[String] = {
     getLatestAirQuality(db).map {
-      case Some(airQuality) =>
-        convertAirQualityToJson(airQuality)
-      case None =>
-        "No data found"
+      case Some(airQuality) => airQuality.toJson
+      case None => "No data found"
     }.recover {
-      case e: Exception =>
-        s"Error: ${e.getMessage}"
+      case e: Exception => s"Error: ${e.getMessage}"
     }
   }
 
@@ -31,7 +28,7 @@ object HttpFetch {
       means <- Future.sequence(futures)
     } yield {
       val mean = if (means.nonEmpty) means.sum / means.length else 0.0
-      convertMeanExerciseTimeToJson(period, year, month, week, mean, means)
+      period.toJson(year, month, week, mean, means)
     }
   }
 
@@ -46,7 +43,7 @@ object HttpFetch {
       counts <- Future.sequence(futures)
     } yield {
       val count = counts.flatten.sum
-      convertNumberOfSessionsToJson(period, year, month, week, Some(count), counts.flatten)
+      period.toJson(year, month, week, Some(count), counts.flatten)
     }
   }
 
@@ -67,12 +64,10 @@ object HttpFetch {
   }
 
   def fetchNumberOfSessionsByMonth(db: Database, userID: String, year: Int, month: Int)(implicit ec: ExecutionContext): Future[String] = {
-    println("Month: " + month)
     fetchNumberOfSessions(db, userID, year, "month", Some(month))
   }
 
   def fetchNumberOfSessionsByWeek(db: Database, userID: String, year: Int, month: Int, week: Int)(implicit ec: ExecutionContext): Future[String] = {
-    println("Week: " + week)
     fetchNumberOfSessions(db, userID, year, "week", Some(month), Some(week))
   }
 }
