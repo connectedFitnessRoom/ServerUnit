@@ -10,7 +10,7 @@ import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.*
 import akka.stream.{Materializer, SystemMaterializer}
-import be.serverunit.api.HttpFetch.{fetchAirQuality, fetchNumberOfSessionsByMonth, fetchNumberOfSessionsByWeek, fetchNumberOfSessionsByYear}
+import be.serverunit.api.HttpFetch.*
 import be.serverunit.api.JsonConvertor.convertAirQualityToJson
 import be.serverunit.database.Air
 import be.serverunit.database.operations.Query.*
@@ -57,7 +57,24 @@ object HttpActor {
           val future: Future[String] = frequency match {
             case "Year" => fetchNumberOfSessionsByYear(db, userID, dateTime.getYear)
             case "Month" => fetchNumberOfSessionsByMonth(db, userID, dateTime.getYear, dateTime.getMonthValue)
-            case "Week" => fetchNumberOfSessionsByWeek(db, userID, dateTime.getYear, dateTime.getMonthValue, dateTime.getDayOfMonth)
+            case "Week" => fetchNumberOfSessionsByWeek(db, userID, dateTime.getYear, dateTime.getMonthValue, {dateTime.getDayOfMonth - 1} / 7 + 1)
+          }
+          onComplete(future) {
+            // On success, return the result
+            case Success(result) => complete(result)
+            case Failure(ex) => complete(StatusCodes.InternalServerError -> s"Failed: ${ex.getMessage}")
+          }
+        }
+      },
+      path("api" / "mean_exercise_time") {
+        parameters("Frequency", "UserID", "Date") { (frequency, userID, date) =>
+          // Parse the date string into a LocalDateTime object
+          val dateTime = LocalDateTime.parse(date)
+          // Fetch the mean exercise time for a user on a given date
+          val future: Future[String] = frequency match {
+            case "Year" => fetchMeanExerciseTimeByYear(db, userID, dateTime.getYear)
+            case "Month" => fetchMeanExerciseTimeByMonth(db, userID, dateTime.getYear, dateTime.getMonthValue)
+            case "Week" => fetchMeanExerciseTimeByWeek(db, userID, dateTime.getYear, dateTime.getMonthValue, {dateTime.getDayOfMonth - 1} / 7 + 1)
           }
           onComplete(future) {
             // On success, return the result
@@ -85,4 +102,5 @@ object HttpActor {
     println(s"Fetching data for $api")
     scala.concurrent.Future.successful(s"Data for $api")
   }
+
 }

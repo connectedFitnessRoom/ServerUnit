@@ -5,8 +5,10 @@ import be.serverunit.database.SlickTables.{airs, sessions, sets}
 import slick.jdbc.JdbcBackend.Database
 import slick.jdbc.H2Profile.api.*
 import slick.lifted.Functions.*
+import slick.lifted.SimpleFunction
 
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -17,108 +19,43 @@ object Query {
     db.run(query)
   }
 
-  def getNumberOfSessionsByYearByUser(db: Database, userID: String, year: Int): Future[Option[Int]] = {
-    val query = sessions.filter { session =>
-      session.userID === userID && session.beginDate.asColumnOf[LocalDateTime].getYear === year
-    }.length.result
+  private def filterSessions(userID: String, year: Int, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None) = {
+    val extractYear = SimpleFunction.unary[java.time.Instant, Int]("YEAR")
+    val extractMonth = SimpleFunction.unary[java.time.Instant, Int]("MONTH")
+    val extractDay = SimpleFunction.unary[java.time.Instant, Int]("DAY")
 
+
+    sessions.filter { session =>
+      val yearMatch = extractYear(session.beginDate) === year
+      val monthMatch = month.map(m => extractMonth(session.beginDate) === m: Rep[Boolean]).getOrElse(true: Rep[Boolean])
+      val weekMatch = week.map(w => (extractDay(session.beginDate) - 1) / 7 + 1 === w: Rep[Boolean]).getOrElse(true: Rep[Boolean])
+      val dayMatch = day.map(d => extractDay(session.beginDate) === d: Rep[Boolean]).getOrElse(true: Rep[Boolean])
+
+      session.userID === userID && yearMatch && monthMatch && weekMatch && dayMatch
+    }.map(_.id)
+  }
+
+  def getNumberOfSessions(db: Database, userID: String, year: Int, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None): Future[Option[Int]] = {
+    val query = filterSessions(userID, year, month, week, day).length.result
     db.run(query).map(Some(_))
   }
 
-  def getNumberOfSessionsByMonthByUser(db: Database, userID: String, year: Int, month: Int): Future[Option[Int]] = {
-    val query = sessions.filter { session =>
-      session.userID === userID &&
-        session.beginDate.asColumnOf[LocalDateTime].getYear === year &&
-        session.beginDate.asColumnOf[LocalDateTime].getMonth === month
-    }.length.result
-
-    db.run(query).map(Some(_))
-  }
-
-  def getNumberOfSessionsByWeekByUser(db: Database, userID: String, year: Int, month: Int, startDay: Int): Future[Option[Int]] = {
-    val query = sessions.filter { session =>
-      session.userID === userID &&
-        session.beginDate.asColumnOf[LocalDateTime].getYear === year &&
-        session.beginDate.asColumnOf[LocalDateTime].getMonth === month &&
-        session.beginDate.asColumnOf[LocalDateTime].getDay >= startDay &&
-        session.beginDate.asColumnOf[LocalDateTime].getDay < startDay + 7
-    }.length.result
-
-    db.run(query).map(Some(_))
-  }
-
-  def getNumberOfSessionsByDayByUser(db: Database, userID: String, year: Int, month: Int, day: Int): Future[Option[Int]] = {
-    val query = sessions.filter { session =>
-      session.userID === userID &&
-        session.beginDate.asColumnOf[LocalDateTime].getYear === year &&
-        session.beginDate.asColumnOf[LocalDateTime].getMonth === month &&
-        session.beginDate.asColumnOf[LocalDateTime].getDay === day
-    }.length.result
-
-    db.run(query).map(Some(_))
-  }
-
-  implicit class LocalDateTimeColumnOps(val col: Rep[LocalDateTime]) extends AnyVal {
-    def getYear: Rep[Int] = col.asColumnOf[String].substring(0, 4).asColumnOf[Int]
-    def getMonth: Rep[Int] = col.asColumnOf[String].substring(5, 7).asColumnOf[Int]
-    def getDay: Rep[Int] = col.asColumnOf[String].substring(8, 10).asColumnOf[Int]
-  }
-
-
-  def getMeanExerciseTimeByMonthByUser(db: Database, userID: String, year: Int, month: Int): Future[Option[Double]] = {
-    val sessionIdsQuery = sessions.filter { session =>
-      session.userID === userID &&
-        session.beginDate.asColumnOf[LocalDateTime].getYear === year &&
-        session.beginDate.asColumnOf[LocalDateTime].getMonth === month
-    }.map(_.id).result
+  def getMeanExerciseTime(db: Database, userID: String, year: Int, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None): Future[Double] = {
+    val sessionIdsQuery = filterSessions(userID, year, month, week, day).result
 
     val setsQuery = sessionIdsQuery.flatMap { sessionIds =>
-      sets.filter(_.sessionID inSet sessionIds).map { set =>
-        set.endDate.asColumnOf[Long] - set.beginDate.asColumnOf[Long]
+      sets.filter(set => (set.sessionID inSet sessionIds) && set.endDate.isDefined).map { set =>
+        (set.beginDate, set.endDate)
       }.result
     }
 
-    db.run(setsQuery).map { times =>
-      if (times.nonEmpty) Some(times.sum.toDouble / times.length) else None
-    }
-  }
+    db.run(setsQuery).map { sets =>
+      val times = sets.collect { case (beginDate, Some(endDate)) =>
+        println(s"beginDate: $beginDate, endDate: $endDate")
+        java.time.Duration.between(beginDate, endDate).getSeconds
+      }
 
-  def getMeanExerciseTimeByWeekByUser(db: Database, userID: String, year: Int, month: Int, startDay: Int): Future[Option[Double]] = {
-    val sessionIdsQuery = sessions.filter { session =>
-      session.userID === userID &&
-        session.beginDate.asColumnOf[LocalDateTime].getYear === year &&
-        session.beginDate.asColumnOf[LocalDateTime].getMonth === month &&
-        session.beginDate.asColumnOf[LocalDateTime].getDay >= startDay &&
-        session.beginDate.asColumnOf[LocalDateTime].getDay < startDay + 7
-    }.map(_.id).result
-
-    val setsQuery = sessionIdsQuery.flatMap { sessionIds =>
-      sets.filter(_.sessionID inSet sessionIds).map { set =>
-        set.endDate.asColumnOf[Long] - set.beginDate.asColumnOf[Long]
-      }.result
-    }
-
-    db.run(setsQuery).map { times =>
-      if (times.nonEmpty) Some(times.sum.toDouble / times.length) else None
-    }
-  }
-
-  def getMeanExerciseTimeByDayByUser(db: Database, userID: String, year: Int, month: Int, day: Int): Future[Option[Double]] = {
-    val sessionIdsQuery = sessions.filter { session =>
-      session.userID === userID &&
-        session.beginDate.asColumnOf[LocalDateTime].getYear === year &&
-        session.beginDate.asColumnOf[LocalDateTime].getMonth === month &&
-        session.beginDate.asColumnOf[LocalDateTime].getDay === day
-    }.map(_.id).result
-
-    val setsQuery = sessionIdsQuery.flatMap { sessionIds =>
-      sets.filter(_.sessionID inSet sessionIds).map { set =>
-        set.endDate.asColumnOf[Long] - set.beginDate.asColumnOf[Long]
-      }.result
-    }
-
-    db.run(setsQuery).map { times =>
-      if (times.nonEmpty) Some(times.sum.toDouble / times.length) else None
+      if (times.nonEmpty) times.sum.toDouble / times.length else 0.0
     }
   }
 }

@@ -20,100 +20,59 @@ object HttpFetch {
     }
   }
 
-  def fetchNumberOfSessionsByYear(db: Database, userID: String, year: Int)(implicit ec: ExecutionContext): Future[String] = {
-    val monthFutures = (1 to 12).map { month =>
-      getNumberOfSessionsByMonthByUser(db, userID, year, month).map {
-        case Some(count) => count
-        case None => 0
-      }
+  private def fetchMeanExerciseTime(db: Database, userID: String, year: Int, period: String, month: Option[Int] = None, week: Option[Int] = None)(implicit ec: ExecutionContext): Future[String] = {
+    val futures = period match {
+      case "year" => (1 to 12).map(m => getMeanExerciseTime(db, userID, year, Some(m)))
+      case "month" => (1 to 5).map(w => getMeanExerciseTime(db, userID, year, month, Some(w)))
+      case "week" => (1 to 7).map(d => getMeanExerciseTime(db, userID, year, month, week, Some((week.get - 1) * 7 + d)))
     }
 
     for {
-      monthlyCounts <- Future.sequence(monthFutures)
+      means <- Future.sequence(futures)
     } yield {
-      val yearCount = monthlyCounts.sum
-      visitByYear(year, yearCount, monthlyCounts)
+      val mean = if (means.nonEmpty) means.sum / means.length else 0.0
+      convertMeanExerciseTimeToJson(period, year, month, week, mean, means)
     }
   }
 
-  def fetchNumberOfSessionsByMonth(db: Database, userID: String, year: Int, month: Int)(implicit ec: ExecutionContext): Future[String] = {
-    val weekFutures = (1 to 5).map { week =>
-      getNumberOfSessionsByWeekByUser(db, userID, year, month, (week - 1) * 7 + 1).map {
-        case Some(count) => count
-        case None => 0
-      }
+  private def fetchNumberOfSessions(db: Database, userID: String, year: Int, period: String, month: Option[Int] = None, week: Option[Int] = None)(implicit ec: ExecutionContext): Future[String] = {
+    val futures = period match {
+      case "year" => (1 to 12).map(m => getNumberOfSessions(db, userID, year, Some(m)))
+      case "month" => (1 to 5).map(w => getNumberOfSessions(db, userID, year, month, Some(w)))
+      case "week" => (1 to 7).map(d => getNumberOfSessions(db, userID, year, month, week, Some((week.get - 1) * 7 + d)))
     }
 
     for {
-      weeklyCounts <- Future.sequence(weekFutures)
+      counts <- Future.sequence(futures)
     } yield {
-      val monthCount = weeklyCounts.sum
-      visitByMonth(year, month, monthCount, weeklyCounts)
+      val count = counts.flatten.sum
+      convertNumberOfSessionsToJson(period, year, month, week, Some(count), counts.flatten)
     }
   }
-
-  def fetchNumberOfSessionsByWeek(db: Database, userID: String, year: Int, month: Int, week: Int)(implicit ec: ExecutionContext): Future[String] = {
-    val dayFutures = (1 to 7).map { day =>
-      getNumberOfSessionsByDayByUser(db, userID, year, month, (week - 1) * 7 + day).map {
-        case Some(count) => count
-        case None => 0
-      }
-    }
-
-    for {
-      dailyCounts <- Future.sequence(dayFutures)
-    } yield {
-      val weekCount = dailyCounts.sum
-      visitByWeek(year, month, week, weekCount, dailyCounts)
-    }
-  }
-
 
   def fetchMeanExerciseTimeByYear(db: Database, userID: String, year: Int)(implicit ec: ExecutionContext): Future[String] = {
-    val monthFutures = (1 to 12).map { month =>
-      getMeanExerciseTimeByMonthByUser(db, userID, year, month).map {
-        case Some(meanTime) => meanTime
-        case None => 0.0
-      }
-    }
-
-    for {
-      monthlyMeans <- Future.sequence(monthFutures)
-    } yield {
-      val yearMean = if (monthlyMeans.nonEmpty) monthlyMeans.sum / monthlyMeans.length else 0.0
-      exerciseTimeByYear(year, yearMean, monthlyMeans)
-    }
+    fetchMeanExerciseTime(db, userID, year, "year")
   }
 
   def fetchMeanExerciseTimeByMonth(db: Database, userID: String, year: Int, month: Int)(implicit ec: ExecutionContext): Future[String] = {
-    val weekFutures = (1 to 5).map { week =>
-      getMeanExerciseTimeByWeekByUser(db, userID, year, month, (week - 1) * 7 + 1).map {
-        case Some(meanTime) => meanTime
-        case None => 0.0
-      }
-    }
-
-    for {
-      weeklyMeans <- Future.sequence(weekFutures)
-    } yield {
-      val monthMean = if (weeklyMeans.nonEmpty) weeklyMeans.sum / weeklyMeans.length else 0.0
-      exerciseTimeByMonth(year, month, monthMean, weeklyMeans)
-    }
+    fetchMeanExerciseTime(db, userID, year, "month", Some(month))
   }
 
   def fetchMeanExerciseTimeByWeek(db: Database, userID: String, year: Int, month: Int, week: Int)(implicit ec: ExecutionContext): Future[String] = {
-    val dayFutures = (1 to 7).map { day =>
-      getMeanExerciseTimeByDayByUser(db, userID, year, month, (week - 1) * 7 + day).map {
-        case Some(meanTime) => meanTime
-        case None => 0.0
-      }
-    }
+    fetchMeanExerciseTime(db, userID, year, "week", Some(month), Some(week))
+  }
 
-    for {
-      dailyMeans <- Future.sequence(dayFutures)
-    } yield {
-      val weekMean = if (dailyMeans.nonEmpty) dailyMeans.sum / dailyMeans.length else 0.0
-      exerciseTimeByWeek(year, month, week, weekMean, dailyMeans)
-    }
+  def fetchNumberOfSessionsByYear(db: Database, userID: String, year: Int)(implicit ec: ExecutionContext): Future[String] = {
+    fetchNumberOfSessions(db, userID, year, "year")
+  }
+
+  def fetchNumberOfSessionsByMonth(db: Database, userID: String, year: Int, month: Int)(implicit ec: ExecutionContext): Future[String] = {
+    println("Month: " + month)
+    fetchNumberOfSessions(db, userID, year, "month", Some(month))
+  }
+
+  def fetchNumberOfSessionsByWeek(db: Database, userID: String, year: Int, month: Int, week: Int)(implicit ec: ExecutionContext): Future[String] = {
+    println("Week: " + week)
+    fetchNumberOfSessions(db, userID, year, "week", Some(month), Some(week))
   }
 }
