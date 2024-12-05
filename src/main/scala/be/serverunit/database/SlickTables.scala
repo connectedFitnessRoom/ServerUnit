@@ -1,9 +1,9 @@
 package be.serverunit.database
 
-import be.serverunit.database.Session
+import be.serverunit.database.UserSession
 import slick.jdbc.H2Profile.api.*
 
-import java.time.LocalDateTime
+import java.time.Instant
 
 object SlickTables {
 
@@ -12,7 +12,7 @@ object SlickTables {
   lazy val sets = TableQuery[Sets]
   lazy val machines = TableQuery[Machines]
   lazy val repetitions = TableQuery[Repetitions]
-  lazy val airQualities = TableQuery[AirQualities]
+  lazy val airs = TableQuery[Airs]
 
   class Users(tag: Tag) extends Table[User](tag, "USERS") {
     // mapping function to case class
@@ -25,15 +25,15 @@ object SlickTables {
     def password = column[String]("PASSWORD")
   }
 
-  class UserSessions(tag: Tag) extends Table[Session](tag, "SESSIONS") {
+  class UserSessions(tag: Tag) extends Table[UserSession](tag, "SESSIONS") {
     // Mapping the case class Session to the columns
-    def * = (id, userID, beginDate, endDate).mapTo[Session]
+    def * = (id, userID, beginDate, endDate).mapTo[UserSession]
 
     def id = column[Long]("SESSION_ID", O.PrimaryKey, O.AutoInc)
 
-    def beginDate = column[LocalDateTime]("BEGIN_DATE")
+    def beginDate = column[Instant]("BEGIN_DATE")
 
-    def endDate = column[Option[LocalDateTime]]("END_DATE")
+    def endDate = column[Option[Instant]]("END_DATE")
 
     // Foreign key relationship
     def user = foreignKey("USER_FK", userID, users)(_.id)
@@ -46,9 +46,9 @@ object SlickTables {
 
     def id = column[Long]("SET_ID", O.AutoInc, O.PrimaryKey)
 
-    def beginDate = column[LocalDateTime]("BEGIN_DATE")
+    def beginDate = column[Instant]("BEGIN_DATE")
 
-    def endDate = column[Option[LocalDateTime]]("END_DATE")
+    def endDate = column[Option[Instant]]("END_DATE")
 
     def repetitions = column[Option[Int]]("REPETITION")
 
@@ -90,17 +90,17 @@ object SlickTables {
 
   }
 
-  class AirQualities(tag: Tag) extends Table[AirQuality](tag, "AIR_QUALITY") {
-    def * = (id, temperature, humidity, pm, timestamp).mapTo[AirQuality]
+  class Airs(tag: Tag) extends Table[Air](tag, "AIR_QUALITY") {
+    def * = (id, temperature, humidity, ppm, timestamp).mapTo[Air]
 
-    def id = column[Long]("AIR_QUALITY_ID", O.PrimaryKey)
+    def id = column[Long]("AIR_QUALITY_ID", O.PrimaryKey, O.AutoInc)
 
     def temperature = column[Float]("TEMPERATURE")
 
     def humidity = column[Float]("HUMIDITY")
 
-    def pm = column[Float]("PM")
+    def ppm = column[Float]("PPM")
 
-    def timestamp = column[LocalDateTime]("TIMESTAMP")
+    def timestamp = column[Instant]("TIMESTAMP")
   }
 }

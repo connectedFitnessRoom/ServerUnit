@@ -6,7 +6,7 @@ import be.serverunit.database.*
 import be.serverunit.database.operations.ComplexInsert.*
 import slick.jdbc.JdbcBackend.Database
 
-import java.time.LocalDateTime
+import java.time.Instant
 import scala.concurrent.ExecutionContextExecutor
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
@@ -63,9 +63,9 @@ object MachineActor {
 
   sealed trait MachineMessage
 
-  case class StartData(user: String, receivedTime: LocalDateTime, weight: Float) extends MachineMessage
+  case class StartData(user: String, receivedTime: Instant, weight: Float) extends MachineMessage
 
   case class Data(distance: Int, timer: Float) extends MachineMessage
 
-  case class EndData(reps: Int, time: LocalDateTime) extends MachineMessage
+  case class EndData(reps: Int, time: Instant) extends MachineMessage
 }

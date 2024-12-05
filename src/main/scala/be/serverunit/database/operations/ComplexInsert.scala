@@ -5,7 +5,7 @@ import be.serverunit.database.utils.PrintDB
 import be.serverunit.database.{Repetition, Set}
 import slick.jdbc.JdbcBackend.Database
 
-import java.time.LocalDateTime
+import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 
 object ComplexInsert {
 
-  def insertStartData(db: Database, machineID: Int, userID: String, time: LocalDateTime, weight: Float): Future[Option[Set]] = {
+  def insertStartData(db: Database, machineID: Int, userID: String, time: Instant, weight: Float): Future[Option[Set]] = {
     getLastSessionByUser(db, userID).flatMap {
       case Some(sess) =>
         val newSet = Set(0, sess.id, machineID, time, None, None, weight)
@@ -34,7 +34,7 @@ object ComplexInsert {
     )
   }
 
-  def insertEndData(db: Database, currentSet: Set, reps: Int, time: LocalDateTime): Unit = {
+  def insertEndData(db: Database, currentSet: Set, reps: Int, time: Instant): Unit = {
     val updatedSet = currentSet.copy(repetitions = Some(reps), endDate = Some(time))
     updateSet(db, updatedSet).onComplete({
       case Success(_) => println("Set updated")

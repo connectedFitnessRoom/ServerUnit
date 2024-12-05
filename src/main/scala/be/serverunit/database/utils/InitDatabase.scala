@@ -1,6 +1,6 @@
 package be.serverunit.database.utils
 
-import be.serverunit.database.{Machine, Repetition, Session, Set, SlickTables, User}
+import be.serverunit.database.{Air, Machine, Repetition, UserSession, Set, SlickTables, User}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
 
@@ -11,7 +11,7 @@ object InitDatabase {
   def setupDatabase(db: Database)(implicit ec: ExecutionContext): Future[Unit] = {
     val setup = for {
       // Create the tables, including primary and foreign keys
-      _ <- db.run((SlickTables.users.schema ++ SlickTables.sessions.schema ++ SlickTables.sets.schema ++ SlickTables.machines.schema ++ SlickTables.repetitions.schema).create)
+      _ <- db.run((SlickTables.users.schema ++ SlickTables.sessions.schema ++ SlickTables.sets.schema ++ SlickTables.machines.schema ++ SlickTables.repetitions.schema ++ SlickTables.airs.schema).create)
 
       // Insert some users
       _ <- db.run(DBIO.seq(
@@ -22,9 +22,9 @@ object InitDatabase {
 
       // Insert some sessions and retrieve the auto-generated SESSION_IDs
       sessionIds <- db.run(DBIO.seq(
-        SlickTables.sessions += Session(0, "1", java.time.LocalDateTime.now(), None),
-        SlickTables.sessions += Session(0, "2", java.time.LocalDateTime.now(), None),
-        SlickTables.sessions += Session(0, "3", java.time.LocalDateTime.now(), None)
+        SlickTables.sessions += UserSession(0, "1", java.time.Instant.now(), None),
+        SlickTables.sessions += UserSession(0, "2", java.time.Instant.now(), None),
+        SlickTables.sessions += UserSession(0, "3", java.time.Instant.now(), None)
       ).flatMap(_ => SlickTables.sessions.result))
 
       // Insert machines
@@ -36,9 +36,9 @@ object InitDatabase {
 
       // Insert sets using the correct sessionIds
       _ <- db.run(DBIO.seq(
-        SlickTables.sets += Set(0, sessionIds.head.id, 0, java.time.LocalDateTime.now(), None, None, 0),
-        SlickTables.sets += Set(1, sessionIds(1).id, 1, java.time.LocalDateTime.now(), None, None, 0),
-        SlickTables.sets += Set(2, sessionIds(2).id, 2, java.time.LocalDateTime.now(), None, None, 0)
+        SlickTables.sets += Set(0, sessionIds.head.id, 0, java.time.Instant.now(), None, None, 0),
+        SlickTables.sets += Set(1, sessionIds(1).id, 1, java.time.Instant.now(), None, None, 0),
+        SlickTables.sets += Set(2, sessionIds(2).id, 2, java.time.Instant.now(), None, None, 0)
       ))
 
       // Insert some repetitions
@@ -48,7 +48,15 @@ object InitDatabase {
         SlickTables.repetitions += Repetition(3, 0, 0)
       ))
 
+      // Insert some air qualities
+      _ <- db.run(DBIO.seq(
+        SlickTables.airs += Air(0, 0, 0, 0, java.time.Instant.now()),
+        SlickTables.airs += Air(1, 3, 4, 5, java.time.Instant.now()),
+        SlickTables.airs += Air(2, 6, 7, 8, java.time.Instant.now())
+      ))
+
     } yield ()
+
 
     setup.transform {
       case Success(_) => Success(())

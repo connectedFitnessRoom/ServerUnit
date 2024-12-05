@@ -2,13 +2,14 @@ package be.serverunit.api
 
 import play.api.libs.json.*
 
-import java.time.LocalDateTime
+import java.time.{Instant, LocalDateTime, ZoneOffset}
+import java.time.format.DateTimeFormatter
 
 object JsonExtractor {
-  def extractStartData(json: JsValue): Option[(String, LocalDateTime, Int)] = {
+  def extractStartData(json: JsValue): Option[(String, Instant, Int)] = {
     for {
       user <- (json \ "user").asOpt[String]
-      time <- (json \ "time").asOpt[LocalDateTime]
+      time <- (json \ "time").asOpt[Instant]
       weight <- (json \ "weight").asOpt[Int]
     } yield (user, time, weight)
   }
@@ -20,20 +21,23 @@ object JsonExtractor {
     } yield (distance, timer)
   }
 
-  def extractEndData(json: JsValue): Option[(Int, LocalDateTime)] = {
+  def extractEndData(json: JsValue): Option[(Int, Instant)] = {
     for {
       user <- (json \ "user").asOpt[String]
       reps <- (json \ "reps").asOpt[Int]
-      time <- (json \ "time").asOpt[LocalDateTime]
+      time <- (json \ "time").asOpt[Instant]
     } yield (reps, time)
   }
 
-  def extractAirData(json: JsValue): Option[(Float, Float, Float, LocalDateTime)] = {
+  def extractAirData(json: JsValue): Option[(Float, Float, Float, Instant)] = {
+    val formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd:HH:mm:ss")
     for {
       temperature <- (json \ "temperature").asOpt[Float]
       humidity <- (json \ "humidity").asOpt[Float]
-      pm <- (json \ "pm").asOpt[Float]
-      timestamp <- (json \ "timestamp").asOpt[LocalDateTime]
-    } yield (temperature, humidity, pm, timestamp)
+      ppm <- (json \ "ppm").asOpt[Float]
+      timestamp <- (json \ "date").asOpt[String].map { dateStr =>
+        LocalDateTime.parse(dateStr, formatter).toInstant(ZoneOffset.UTC)
+      }
+    } yield (temperature, humidity, ppm, timestamp)
   }
 }

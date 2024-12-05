@@ -4,10 +4,12 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import be.serverunit.actors.MachineActor.*
 import be.serverunit.api.JsonExtractor.*
+import be.serverunit.database.Air
+import be.serverunit.database.operations.Basic.insertAirQuality
 import play.api.libs.json.*
 import slick.jdbc.JdbcBackend.Database
 
-import java.time.LocalDateTime
+import java.time.Instant
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
@@ -32,17 +34,11 @@ object MachineManager {
             Behaviors.same
         }
 
-        case airPattern() =>
-          println(s"Received air data : $payload")
-          Behaviors.same
-        /*extractAirData(payload) match {
-        case Some((temperature, humidity, pm, timestamp)) =>
-          // Inserting the data into the database
-          //insertAirData(temperature, humidity, pm, timestamp)
-          Behaviors.same
-        case _ =>
-          println("Error extracting data")
-          Behaviors.same*/
+        case airPattern() => handleAirData(payload, context, db) match {
+          case Success(_) => Behaviors.same
+          case Failure(e) => println(s"Error handling air data: $e")
+            Behaviors.same
+        }
         case other => println(s"Unknown topic: $other")
           Behaviors.same
       }
@@ -103,6 +99,21 @@ object MachineManager {
         case _ => Failure(new Exception("Error extracting data when handling end data"))
       }
       case None => Failure(new Exception("Error: Machine actor not found"))
+    }
+  }
+  
+  private def handleAirData(payload: String, context: ActorContext[processMessage], db: Database): Try[Unit] = {
+    val jsonReceived: Try[JsValue] = Try(Json.parse(payload))
+
+    jsonReceived.flatMap { json =>
+      extractAirData(json) match {
+        case Some((temperature, humidity, pm, timestamp)) =>
+          println(s"Received air data: temperature: $temperature, humidity: $humidity, pm: $pm, timestamp: $timestamp")
+          val airData = Air(0, temperature, humidity, pm, timestamp)
+          Try(insertAirQuality(db, airData))
+        case _ =>
+          Failure(new Exception("Error extracting data when handling air data"))
+      }
     }
   }
 
