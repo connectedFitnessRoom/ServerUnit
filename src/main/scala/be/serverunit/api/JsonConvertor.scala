@@ -1,7 +1,7 @@
 package be.serverunit.api
 
 import be.serverunit.database.Air
-import play.api.libs.json._
+import play.api.libs.json.*
 
 object JsonConvertor {
 
@@ -39,29 +39,6 @@ object JsonConvertor {
     Json.obj(s"exo_time_$period" -> periodJson)
   }
 
-  private def sessionToJson(session: SessionData): JsObject = {
-    Json.obj(
-      "sessionDuration" -> session.sessionDuration,
-      "env_data" -> Json.obj(
-        "temperature" -> session.envData._1,
-        "humidity" -> session.envData._2,
-        "particulate" -> session.envData._3
-      )
-    )
-  }
-
-  private def detailedSessionToJson(session: DetailedSessionData): JsObject = {
-    Json.obj(
-      "sessionDuration" -> session.sessionDuration,
-      "env_data" -> Json.obj(
-        "temperature" -> session.envData._1,
-        "humidity" -> session.envData._2,
-        "particulate" -> session.envData._3
-      ),
-      "sets" -> session.sets
-    )
-  }
-
   def sessionDataToJson(year: Int, month: Int, day: Int, dayAvg: String, sessions: Seq[SessionData]): JsValue = {
     Json.obj(
       "exo_time_day" -> Json.obj(
@@ -70,6 +47,17 @@ object JsonConvertor {
         "day" -> day,
         "day_avg" -> dayAvg,
         "sessions" -> sessions.map(sessionToJson)
+      )
+    )
+  }
+
+  private def sessionToJson(session: SessionData): JsObject = {
+    Json.obj(
+      "sessionDuration" -> session.sessionDuration,
+      "env_data" -> Json.obj(
+        "temperature" -> session.envData._1,
+        "humidity" -> session.envData._2,
+        "particulate" -> session.envData._3
       )
     )
   }
@@ -93,6 +81,18 @@ object JsonConvertor {
       "day" -> day,
       "session_count" -> sessionCount,
       "sessions" -> sessions.map(detailedSessionToJson)
+    )
+  }
+
+  private def detailedSessionToJson(session: DetailedSessionData): JsObject = {
+    Json.obj(
+      "sessionDuration" -> session.sessionDuration,
+      "env_data" -> Json.obj(
+        "temperature" -> session.envData._1,
+        "humidity" -> session.envData._2,
+        "particulate" -> session.envData._3
+      ),
+      "sets" -> session.sets
     )
   }
 

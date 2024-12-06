@@ -1,9 +1,9 @@
 package be.serverunit
 
 import akka.NotUsed
+import akka.actor.CoordinatedShutdown
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem}
-import akka.actor.CoordinatedShutdown
 import be.serverunit.actors.{HttpActor, MachineManager, MqttActor}
 import be.serverunit.database.utils.{InitDatabase, PrintDB}
 import slick.jdbc.JdbcBackend.Database

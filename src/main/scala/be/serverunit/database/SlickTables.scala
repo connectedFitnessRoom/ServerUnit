@@ -34,10 +34,10 @@ object SlickTables {
 
     def endDate = column[Option[Instant]]("END_DATE")
 
+    def userID = column[String]("USER_ID")
+
     // Foreign key relationship
     def user = foreignKey("USER_FK", userID, users)(_.id)
-
-    def userID = column[String]("USER_ID")
   }
 
   class Sets(tag: Tag) extends Table[Set](tag, "SET") {
@@ -77,15 +77,15 @@ object SlickTables {
 
     def distance = column[Int]("DISTANCE")
 
+    def timer = column[Float]("TIMER")
+
     // Composite primary key
     def pk = primaryKey("REP_PK", (setID, timer))
 
-    def setID = column[Long]("SET_ID")
-
-    def timer = column[Float]("TIMER")
-
     // Foreign key
     def set = foreignKey("SET_FK", setID, sets)(_.id)
+
+    def setID = column[Long]("SET_ID")
 
   }
 

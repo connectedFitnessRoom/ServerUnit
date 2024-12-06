@@ -55,25 +55,11 @@ object Query {
   private def extractMonth(date: Rep[java.time.Instant]) = SimpleFunction.unary[java.time.Instant, Int]("MONTH").apply(date)
 
   private def extractDay(date: Rep[java.time.Instant]) = SimpleFunction.unary[java.time.Instant, Int]("DAY").apply(date)
-  
+
   def getSessionIDsByUserIDByDate(db: Database, userID: String, beginDate: Instant, endDate: Instant)(implicit ec: ExecutionContext): Future[Seq[Long]] = {
     val query = sessions.filter(session => session.userID === userID && session.beginDate >= beginDate && session.beginDate < endDate).map(_.id).result
     db.run(query)
   }
-
-  def getDistancesAndTimesBySetID(db: Database, setID: Long)(implicit ec: ExecutionContext): Future[(List[Int], List[Float])] = {
-    val query = for {
-      set <- sets if set.id === setID
-      repetition <- repetitions if repetition.setID === set.id
-    } yield (repetition.distance, repetition.timer)
-
-    db.run(query.result).map { result =>
-      val distances = result.map(_._1).toList
-      val times = result.map(_._2).toList
-      (distances, times)
-    }
-  }
-
 
   def getSetDataBySessionID(db: Database, sessionID: Long)(implicit ec: ExecutionContext): Future[Seq[(Int, Float, Option[Int], Float, List[Int], List[Float])]] = {
     val setQuery = sets.filter(_.sessionID === sessionID).result
@@ -92,6 +78,18 @@ object Query {
     }
   }
 
+  def getDistancesAndTimesBySetID(db: Database, setID: Long)(implicit ec: ExecutionContext): Future[(List[Int], List[Float])] = {
+    val query = for {
+      set <- sets if set.id === setID
+      repetition <- repetitions if repetition.setID === set.id
+    } yield (repetition.distance, repetition.timer)
+
+    db.run(query.result).map { result =>
+      val distances = result.map(_._1).toList
+      val times = result.map(_._2).toList
+      (distances, times)
+    }
+  }
 
   def getSessionDuration(db: Database, sessionID: Long)(implicit ec: ExecutionContext): Future[Option[Long]] = {
     val query = sessions.filter(_.id === sessionID).result.headOption
