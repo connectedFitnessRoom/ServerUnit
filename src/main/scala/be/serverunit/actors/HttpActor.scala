@@ -34,7 +34,7 @@ object HttpActor {
       path("api" / "mean_exercise_time")(parameters("Frequency", "UserID", "Date")(handleExerciseTimeRequest(db)))
     )
 
-    val bindingFuture = Http().newServerAt("localhost", 9000).bind(routes)
+    val bindingFuture = Http().newServerAt("0.0.0.0", 9000).bind(routes)
     bindingFuture.onComplete {
       case Success(binding) =>
         val address = binding.localAddress
