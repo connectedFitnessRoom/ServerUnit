@@ -32,8 +32,9 @@ object HttpActor {
       path("api" / "air_quality")(get(completeWithFetch(fetchAirQuality(db)))),
       path("api" / "number_of_sessions")(parameters("Frequency", "UserID", "Date")(handleSessionRequest(db))),
       path("api" / "mean_exercise_time")(parameters("Frequency", "UserID", "Date")(handleExerciseTimeRequest(db))),
-      path("api" / "session_time" / "day_global_data")(parameters("UserID", "Date")(handleDayDataRequest(db))),
-      path("api" / "session_time" / "day_global_data1")(parameters("UserID", "Date")(handleDetailedDayDataRequest(db))),
+      path("api" / "session_count")(parameters("UserID", "Date")(handleDetailedDayCountRequest(db))),
+      path("api" / "session_data")(parameters("UserID", "Date")(handleDayDataRequest(db))),
+      path("api" / "session_data" / "detailed")(parameters("UserID", "Date")(handleDetailedDayDataRequest(db))),
     )
 
     val bindingFuture = Http().newServerAt("localhost", 9000).bind(routes)
@@ -85,6 +86,12 @@ object HttpActor {
   private def handleDetailedDayDataRequest(db: Database)(userID: String, date: String)(implicit ec: ExecutionContext): Route = {
     val dateTime = LocalDateTime.parse(date)
     val future: Future[String] = fetchDetailedSessionData(db, userID, dateTime.getYear, dateTime.getMonthValue, dateTime.getDayOfMonth)
+    completeWithFetch(future)
+  }
+  
+  private def handleDetailedDayCountRequest(db: Database)(userID: String, date: String)(implicit ec: ExecutionContext): Route = {
+    val dateTime = LocalDateTime.parse(date)
+    val future: Future[String] = fetchSessionCountForDay(db, userID, dateTime.getYear, dateTime.getMonthValue, dateTime.getDayOfMonth)
     completeWithFetch(future)
   }
 

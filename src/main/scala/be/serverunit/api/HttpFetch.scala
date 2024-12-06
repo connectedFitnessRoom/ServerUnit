@@ -12,7 +12,7 @@ object HttpFetch {
 
   def fetchAirQuality(db: Database)(implicit ec: ExecutionContext): Future[String] = {
     getLatestAirQuality(db).map {
-      case Some(airQuality) => Json.prettyPrint(Json.parse(airToJson(airQuality)))
+      case Some(airQuality) => Json.prettyPrint(airToJson(airQuality))
       case None => "No data found"
     }.recover {
       case e: Exception => s"Error: ${e.getMessage}"
@@ -47,7 +47,7 @@ object HttpFetch {
       means <- Future.sequence(futures)
     } yield {
       val mean = if (means.nonEmpty) means.sum / means.length else 0.0
-      Json.prettyPrint(Json.parse(meanExerciseTimeToJson(period, year, month, week, day, mean, means)))
+      Json.prettyPrint(meanExerciseTimeToJson(period, year, month, week, day, mean, means))
     }
   }
 
@@ -80,7 +80,7 @@ object HttpFetch {
     } yield {
       val flattenedCounts = counts.flatten
       val count = flattenedCounts.sum
-      Json.prettyPrint(Json.parse(numberOfSessionsToJson(period, year, month, week, day, Some(count), flattenedCounts)))
+      Json.prettyPrint(numberOfSessionsToJson(period, year, month, week, day, Some(count), flattenedCounts))
     }
   }
 
@@ -106,7 +106,7 @@ object HttpFetch {
         s"${totalDuration / sessionData.length}min"
       } else "0min"
     } yield {
-      Json.prettyPrint(Json.parse(sessionDataToJson(year, month, day, avgDuration, sessionData)))
+      Json.prettyPrint(sessionDataToJson(year, month, day, avgDuration, sessionData))
     }
   }
 
@@ -143,10 +143,9 @@ object HttpFetch {
         s"${totalDuration / sessionData.length}min"
       } else "0min"
     } yield {
-      Json.prettyPrint(Json.parse(JsonConvertor.detailedSessionDataToJson(year, month, day, avgDuration, sessionData)))
+      Json.prettyPrint(detailedSessionDataToJson(year, month, day, avgDuration, sessionData))
     }
   }
-
 
   def fetchSessionCountForDay(db: Database, userID: String, year: Int, month: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
     val startOfDay = LocalDateTime.of(year, month, day, 0, 0).toInstant(ZoneOffset.UTC)
@@ -178,7 +177,7 @@ object HttpFetch {
       })
       sessionCount = sessionData.length
     } yield {
-      Json.prettyPrint(JsonConvertor.sessionCountToJson(year, month, day, sessionCount, sessionData))
+      Json.prettyPrint(sessionCountToJson(year, month, day, sessionCount, sessionData))
     }
   }
 
