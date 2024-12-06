@@ -51,6 +51,7 @@ object HttpActor {
       case "Year" => fetchNumberOfSessionsByYear(db, userID, dateTime.getYear)
       case "Month" => fetchNumberOfSessionsByMonth(db, userID, dateTime.getYear, dateTime.getMonthValue)
       case "Week" => fetchNumberOfSessionsByWeek(db, userID, dateTime.getYear, dateTime.getMonthValue, (dateTime.getDayOfMonth - 1) / 7 + 1)
+      case "Day" => fetchNumberOfSessionsByDay(db, userID, dateTime.getYear, dateTime.getMonthValue, (dateTime.getDayOfMonth - 1) / 7 + 1, dateTime.getDayOfMonth)
     }
     completeWithFetch(future)
   }
@@ -61,6 +62,7 @@ object HttpActor {
       case "Year" => fetchMeanExerciseTimeByYear(db, userID, dateTime.getYear)
       case "Month" => fetchMeanExerciseTimeByMonth(db, userID, dateTime.getYear, dateTime.getMonthValue)
       case "Week" => fetchMeanExerciseTimeByWeek(db, userID, dateTime.getYear, dateTime.getMonthValue, (dateTime.getDayOfMonth - 1) / 7 + 1)
+      case "Day" => fetchMeanExerciseTimeByDay(db, userID, dateTime.getYear, dateTime.getMonthValue, (dateTime.getDayOfMonth - 1) / 7 + 1, dateTime.getDayOfMonth)
     }
     completeWithFetch(future)
   }
