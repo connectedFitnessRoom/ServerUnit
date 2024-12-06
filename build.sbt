@@ -2,7 +2,10 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.3.4"
 
-// Adding Slick to project )
+val jarName = "orchestrator.jar"
+assembly/assemblyJarName := jarName
+
+// Adding Slick to project
 
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.5.2",
