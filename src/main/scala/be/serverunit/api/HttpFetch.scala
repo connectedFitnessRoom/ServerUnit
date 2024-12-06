@@ -2,15 +2,17 @@ package be.serverunit.api
 
 import be.serverunit.api.JsonConvertor.*
 import be.serverunit.database.operations.Query.*
+import play.api.libs.json.Json
 import slick.jdbc.JdbcBackend.Database
 
+import java.time.{LocalDateTime, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
 object HttpFetch {
 
   def fetchAirQuality(db: Database)(implicit ec: ExecutionContext): Future[String] = {
     getLatestAirQuality(db).map {
-      case Some(airQuality) => airToJson(airQuality)
+      case Some(airQuality) => Json.prettyPrint(Json.parse(airToJson(airQuality)))
       case None => "No data found"
     }.recover {
       case e: Exception => s"Error: ${e.getMessage}"
@@ -45,7 +47,7 @@ object HttpFetch {
       means <- Future.sequence(futures)
     } yield {
       val mean = if (means.nonEmpty) means.sum / means.length else 0.0
-      meanExerciseTimeToJson(period, year, month, week, day, mean, means)
+      Json.prettyPrint(Json.parse(meanExerciseTimeToJson(period, year, month, week, day, mean, means)))
     }
   }
 
@@ -62,7 +64,6 @@ object HttpFetch {
   }
 
   def fetchNumberOfSessionsByDay(db: Database, userID: String, year: Int, month: Int, week: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
-    println("fetchNumberOfSessionsByDay")
     fetchNumberOfSessions(db, userID, year, "day", Some(month), Some(week), Some(day))
   }
 
@@ -79,7 +80,105 @@ object HttpFetch {
     } yield {
       val flattenedCounts = counts.flatten
       val count = flattenedCounts.sum
-      numberOfSessionsToJson(period, year, month, week, day, Some(count), flattenedCounts)
+      Json.prettyPrint(Json.parse(numberOfSessionsToJson(period, year, month, week, day, Some(count), flattenedCounts)))
+    }
+  }
+
+  def fetchSessionData(db: Database, userID: String, year: Int, month: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
+    val startOfDay = LocalDateTime.of(year, month, day, 0, 0).toInstant(ZoneOffset.UTC)
+    val endOfDay = startOfDay.plusSeconds(86400)
+
+    for {
+      sessionIDs <- getSessionIDsByUserIDByDate(db, userID, startOfDay, endOfDay)
+      sessionData <- Future.sequence(sessionIDs.map { sessionID =>
+        for {
+          sessionDuration <- getSessionDuration(db, sessionID)
+          envData <- getAverageEnvDataBySession(db, sessionID)
+        } yield {
+          JsonConvertor.SessionData(
+            sessionDuration = sessionDuration.map(d => s"${d / 60}min").getOrElse("Ongoing"),
+            envData = envData.getOrElse((0.0, 0.0, 0.0))
+          )
+        }
+      })
+      avgDuration = if (sessionData.nonEmpty) {
+        val totalDuration = sessionData.flatMap(_.sessionDuration.split("min").headOption.map(_.toInt)).sum
+        s"${totalDuration / sessionData.length}min"
+      } else "0min"
+    } yield {
+      Json.prettyPrint(Json.parse(sessionDataToJson(year, month, day, avgDuration, sessionData)))
+    }
+  }
+
+  def fetchDetailedSessionData(db: Database, userID: String, year: Int, month: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
+    val startOfDay = LocalDateTime.of(year, month, day, 0, 0).toInstant(ZoneOffset.UTC)
+    val endOfDay = startOfDay.plusSeconds(86400)
+
+    for {
+      sessionIDs <- getSessionIDsByUserIDByDate(db, userID, startOfDay, endOfDay)
+      sessionData <- Future.sequence(sessionIDs.map { sessionID =>
+        for {
+          sessionDuration <- getSessionDuration(db, sessionID)
+          envData <- getAverageEnvDataBySession(db, sessionID)
+          setData <- getSetDataBySessionID(db, sessionID)
+        } yield {
+          JsonConvertor.DetailedSessionData(
+            sessionDuration = sessionDuration.map(d => s"${d / 60}min").getOrElse("Ongoing"),
+            envData = envData.getOrElse((0.0, 0.0, 0.0)),
+            sets = setData.map { case (machineID, weight, repetitions, time, distances, times) =>
+              JsonConvertor.SetData(
+                machine = machineID,
+                weight = weight,
+                repetitions = repetitions,
+                setTime = s"${time / 60}min",
+                distances = distances,
+                times = times
+              )
+            }
+          )
+        }
+      })
+      avgDuration = if (sessionData.nonEmpty) {
+        val totalDuration = sessionData.flatMap(_.sessionDuration.split("min").headOption.map(_.toInt)).sum
+        s"${totalDuration / sessionData.length}min"
+      } else "0min"
+    } yield {
+      Json.prettyPrint(Json.parse(JsonConvertor.detailedSessionDataToJson(year, month, day, avgDuration, sessionData)))
+    }
+  }
+
+
+  def fetchSessionCountForDay(db: Database, userID: String, year: Int, month: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
+    val startOfDay = LocalDateTime.of(year, month, day, 0, 0).toInstant(ZoneOffset.UTC)
+    val endOfDay = startOfDay.plusSeconds(86400)
+
+    for {
+      sessionIDs <- getSessionIDsByUserIDByDate(db, userID, startOfDay, endOfDay)
+      sessionData <- Future.sequence(sessionIDs.map { sessionID =>
+        for {
+          sessionDuration <- getSessionDuration(db, sessionID)
+          envData <- getAverageEnvDataBySession(db, sessionID)
+          setData <- getSetDataBySessionID(db, sessionID)
+        } yield {
+          JsonConvertor.DetailedSessionData(
+            sessionDuration = sessionDuration.map(d => s"${d / 60}min").getOrElse("Ongoing"),
+            envData = envData.getOrElse((0.0, 0.0, 0.0)),
+            sets = setData.map { case (machineID, weight, repetitions, time, distances, times) =>
+              JsonConvertor.SetData(
+                machine = machineID,
+                weight = weight,
+                repetitions = repetitions,
+                setTime = s"${time / 60}min",
+                distances = distances,
+                times = times
+              )
+            }
+          )
+        }
+      })
+      sessionCount = sessionData.length
+    } yield {
+      Json.prettyPrint(JsonConvertor.sessionCountToJson(year, month, day, sessionCount, sessionData))
     }
   }
 

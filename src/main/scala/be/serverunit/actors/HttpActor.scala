@@ -31,10 +31,12 @@ object HttpActor {
     val routes: Route = concat(
       path("api" / "air_quality")(get(completeWithFetch(fetchAirQuality(db)))),
       path("api" / "number_of_sessions")(parameters("Frequency", "UserID", "Date")(handleSessionRequest(db))),
-      path("api" / "mean_exercise_time")(parameters("Frequency", "UserID", "Date")(handleExerciseTimeRequest(db)))
+      path("api" / "mean_exercise_time")(parameters("Frequency", "UserID", "Date")(handleExerciseTimeRequest(db))),
+      path("api" / "session_time" / "day_global_data")(parameters("UserID", "Date")(handleDayDataRequest(db))),
+      path("api" / "session_time" / "day_global_data1")(parameters("UserID", "Date")(handleDetailedDayDataRequest(db))),
     )
 
-    val bindingFuture = Http().newServerAt("0.0.0.0", 9000).bind(routes)
+    val bindingFuture = Http().newServerAt("localhost", 9000).bind(routes)
     bindingFuture.onComplete {
       case Success(binding) =>
         val address = binding.localAddress
@@ -72,6 +74,18 @@ object HttpActor {
       case Success(result) => complete(HttpEntity(ContentTypes.`application/json`, result))
       case Failure(ex) => complete(StatusCodes.InternalServerError -> s"Failed: ${ex.getMessage}")
     }
+  }
+  
+  private def handleDayDataRequest(db: Database)(userID: String, date: String)(implicit ec: ExecutionContext): Route = {
+    val dateTime = LocalDateTime.parse(date)
+    val future: Future[String] = fetchSessionData(db, userID, dateTime.getYear, dateTime.getMonthValue, dateTime.getDayOfMonth)
+    completeWithFetch(future)
+  }
+  
+  private def handleDetailedDayDataRequest(db: Database)(userID: String, date: String)(implicit ec: ExecutionContext): Route = {
+    val dateTime = LocalDateTime.parse(date)
+    val future: Future[String] = fetchDetailedSessionData(db, userID, dateTime.getYear, dateTime.getMonthValue, dateTime.getDayOfMonth)
+    completeWithFetch(future)
   }
 
   sealed trait Command
