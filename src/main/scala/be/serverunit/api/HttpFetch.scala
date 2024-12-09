@@ -13,7 +13,7 @@ object HttpFetch {
   def fetchAirQuality(db: Database)(implicit ec: ExecutionContext): Future[String] = {
     getLatestAirQuality(db).map {
       case Some(airQuality) => Json.prettyPrint(airToJson(airQuality))
-      case None => "No data found"
+      case None => "No air quality data available"
     }.recover {
       case e: Exception => s"Error: ${e.getMessage}"
     }
@@ -89,24 +89,22 @@ object HttpFetch {
     val endOfDay = startOfDay.plusSeconds(86400)
 
     for {
-      sessionIDs <- getSessionIDsByUserIDByDate(db, userID, startOfDay, endOfDay)
-      sessionData <- Future.sequence(sessionIDs.map { sessionID =>
+      sessions <- getSessionByUserIDByDate(db, userID, startOfDay, endOfDay)
+      sessionData <- Future.sequence(sessions.map { session =>
         for {
-          sessionDuration <- getSessionDuration(db, sessionID)
-          envData <- getAverageEnvDataBySession(db, sessionID)
+          sessionDuration <- getSessionDuration(db, session.id)
+          envData <- getAverageEnvDataBySession(db, session.id)
         } yield {
           JsonConvertor.SessionData(
-            sessionDuration = sessionDuration.map(d => s"${d / 60}min").getOrElse("Ongoing"),
+            sessionDuration = s"${session.endDate.getOrElse("Ongoing")} - ${session.beginDate}",
             envData = envData.getOrElse((0.0, 0.0, 0.0))
           )
         }
       })
-      avgDuration = if (sessionData.nonEmpty) {
-        val totalDuration = sessionData.flatMap(_.sessionDuration.split("min").headOption.map(_.toInt)).sum
-        s"${totalDuration / sessionData.length}min"
-      } else "0min"
+      totalDuration = sessionData.flatMap(_.sessionDuration.split(" - ").headOption.map(_.toLong)).sum
+      avgDuration = if (sessionData.nonEmpty) totalDuration / sessionData.length else 0L
     } yield {
-      Json.prettyPrint(sessionDataToJson(year, month, day, avgDuration, sessionData))
+      Json.prettyPrint(sessionDataToJson(year, month, day, avgDuration.toString, sessionData))
     }
   }
 
@@ -115,22 +113,22 @@ object HttpFetch {
     val endOfDay = startOfDay.plusSeconds(86400)
 
     for {
-      sessionIDs <- getSessionIDsByUserIDByDate(db, userID, startOfDay, endOfDay)
-      sessionData <- Future.sequence(sessionIDs.map { sessionID =>
+      sessions <- getSessionByUserIDByDate(db, userID, startOfDay, endOfDay)
+      sessionData <- Future.sequence(sessions.map { session =>
         for {
-          sessionDuration <- getSessionDuration(db, sessionID)
-          envData <- getAverageEnvDataBySession(db, sessionID)
-          setData <- getSetDataBySessionID(db, sessionID)
+          sessionDuration <- getSessionDuration(db, session.id)
+          envData <- getAverageEnvDataBySession(db, session.id)
+          setData <- getSetDataBySessionID(db, session.id)
         } yield {
           JsonConvertor.DetailedSessionData(
-            sessionDuration = sessionDuration.map(d => s"${d / 60}min").getOrElse("Ongoing"),
+            sessionDurationString = s"${session.endDate.getOrElse("Ongoing")} - ${session.beginDate}",
             envData = envData.getOrElse((0.0, 0.0, 0.0)),
-            sets = setData.map { case (machineID, weight, repetitions, time, distances, times) =>
+            sets = setData.map { case (machineID, weight, repetitions, setTime, distances, times) =>
               JsonConvertor.SetData(
                 machine = machineID,
                 weight = weight,
                 repetitions = repetitions,
-                setTime = s"${time / 60}min",
+                setTime = setTime,
                 distances = distances,
                 times = times
               )
@@ -138,12 +136,10 @@ object HttpFetch {
           )
         }
       })
-      avgDuration = if (sessionData.nonEmpty) {
-        val totalDuration = sessionData.flatMap(_.sessionDuration.split("min").headOption.map(_.toInt)).sum
-        s"${totalDuration / sessionData.length}min"
-      } else "0min"
+      totalDuration = sessionData.flatMap(_.sessionDurationString.split(" - ").headOption.map(_.toLong)).sum
+      avgDuration = if (sessionData.nonEmpty) totalDuration / sessionData.length else 0L
     } yield {
-      Json.prettyPrint(detailedSessionDataToJson(year, month, day, avgDuration, sessionData))
+      Json.prettyPrint(detailedSessionDataToJson(year, month, day, avgDuration.toString, sessionData))
     }
   }
 
@@ -152,22 +148,22 @@ object HttpFetch {
     val endOfDay = startOfDay.plusSeconds(86400)
 
     for {
-      sessionIDs <- getSessionIDsByUserIDByDate(db, userID, startOfDay, endOfDay)
-      sessionData <- Future.sequence(sessionIDs.map { sessionID =>
+      sessions <- getSessionByUserIDByDate(db, userID, startOfDay, endOfDay)
+      sessionData <- Future.sequence(sessions.map { session =>
         for {
-          sessionDuration <- getSessionDuration(db, sessionID)
-          envData <- getAverageEnvDataBySession(db, sessionID)
-          setData <- getSetDataBySessionID(db, sessionID)
+          sessionDuration <- getSessionDuration(db, session.id)
+          envData <- getAverageEnvDataBySession(db, session.id)
+          setData <- getSetDataBySessionID(db, session.id)
         } yield {
           JsonConvertor.DetailedSessionData(
-            sessionDuration = sessionDuration.map(d => s"${d / 60}min").getOrElse("Ongoing"),
+            sessionDurationString = s"${session.endDate.getOrElse("Ongoing")} - ${session.beginDate}",
             envData = envData.getOrElse((0.0, 0.0, 0.0)),
-            sets = setData.map { case (machineID, weight, repetitions, time, distances, times) =>
+            sets = setData.map { case (machineID, weight, repetitions, setTime, distances, times) =>
               JsonConvertor.SetData(
                 machine = machineID,
                 weight = weight,
                 repetitions = repetitions,
-                setTime = s"${time / 60}min",
+                setTime = setTime,
                 distances = distances,
                 times = times
               )

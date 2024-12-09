@@ -1,7 +1,7 @@
 package be.serverunit.database.operations
 
-import be.serverunit.database.Air
 import be.serverunit.database.SlickTables.{airs, repetitions, sessions, sets}
+import be.serverunit.database.{Air, UserSession}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
 import slick.lifted.SimpleFunction
@@ -56,23 +56,19 @@ object Query {
 
   private def extractDay(date: Rep[java.time.Instant]) = SimpleFunction.unary[java.time.Instant, Int]("DAY").apply(date)
 
-  def getSessionIDsByUserIDByDate(db: Database, userID: String, beginDate: Instant, endDate: Instant)(implicit ec: ExecutionContext): Future[Seq[Long]] = {
-    val query = sessions.filter(session => session.userID === userID && session.beginDate >= beginDate && session.beginDate < endDate).map(_.id).result
+  def getSessionByUserIDByDate(db: Database, userID: String, beginDate: Instant, endDate: Instant)(implicit ec: ExecutionContext): Future[Seq[UserSession]] = {
+    val query = sessions.filter(session => session.userID === userID && session.beginDate >= beginDate && session.beginDate < endDate).result
     db.run(query)
   }
 
-  def getSetDataBySessionID(db: Database, sessionID: Long)(implicit ec: ExecutionContext): Future[Seq[(Int, Float, Option[Int], Float, List[Int], List[Float])]] = {
+  def getSetDataBySessionID(db: Database, sessionID: Long)(implicit ec: ExecutionContext): Future[Seq[(Int, Float, Option[Int], String, List[Int], List[Float])]] = {
     val setQuery = sets.filter(_.sessionID === sessionID).result
 
     db.run(setQuery).flatMap { setsList =>
       Future.sequence(setsList.map { set =>
         getDistancesAndTimesBySetID(db, set.id).map { case (distances, times) =>
-          // Return the machineID, weight, repetitions, time, distances, and times
-          val time = set.endDate match {
-            case Some(endDate) => Duration.between(set.beginDate, endDate).getSeconds.toFloat
-            case None => 0.0f
-          }
-          (set.machineID, set.weight, set.repetitions, time, distances, times)
+          val setTime = s"${set.endDate.getOrElse("Unknown")} - ${set.beginDate}"
+          (set.machineID, set.weight, set.repetitions, setTime, distances, times)
         }
       }).map(_.toSeq)
     }

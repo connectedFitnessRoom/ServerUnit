@@ -86,7 +86,7 @@ object JsonConvertor {
 
   private def detailedSessionToJson(session: DetailedSessionData): JsObject = {
     Json.obj(
-      "sessionDuration" -> session.sessionDuration,
+      "sessionDuration" -> session.sessionDurationString,
       "env_data" -> Json.obj(
         "temperature" -> session.envData._1,
         "humidity" -> session.envData._2,
@@ -98,7 +98,7 @@ object JsonConvertor {
 
   case class SetData(machine: Int, weight: Float, repetitions: Option[Int], setTime: String, distances: Seq[Int], times: Seq[Float])
 
-  case class DetailedSessionData(sessionDuration: String, envData: (Double, Double, Double), sets: Seq[SetData])
+  case class DetailedSessionData(sessionDurationString: String, envData: (Double, Double, Double), sets: Seq[SetData])
 
   case class SessionData(sessionDuration: String, envData: (Double, Double, Double))
 }

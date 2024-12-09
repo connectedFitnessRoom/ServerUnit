@@ -30,7 +30,7 @@ object MqttActor {
       MqttSource.atMostOnce(
         connectionSettings.withClientId("scala3-client"),
         MqttSubscriptions(Map("basic_frite/machine/#" -> MqttQoS.AtLeastOnce, "AetherGuard/sensordata" -> MqttQoS.AtLeastOnce)),
-        bufferSize = 8
+        bufferSize = 15
       )
     }
 

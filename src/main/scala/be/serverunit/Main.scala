@@ -25,7 +25,7 @@ object Main extends App {
   Await.result(setupFuture, Duration.Inf)
 
   // Print the contents of the database
-  PrintDB.printDatabaseContents(db)
+  //PrintDB.printDatabaseContents(db)
 
   val machineManager: ActorRef[MachineManager.processMessage] = system.systemActorOf(MachineManager(db), "machineManager")
   val mqttActor: ActorRef[MqttActor.MqttMessage] = system.systemActorOf(MqttActor(machineManager), "mqttActor")
