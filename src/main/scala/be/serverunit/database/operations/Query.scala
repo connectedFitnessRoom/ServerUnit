@@ -22,23 +22,6 @@ object Query {
     db.run(query).map(Some(_))
   }
 
-  def getMeanExerciseTime(db: Database, userID: String, year: Int, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None): Future[Double] = {
-    val sessionIdsQuery = filterSessions(userID, year, month, week, day).result
-
-    val setsQuery = sessionIdsQuery.flatMap { sessionIds =>
-      sets.filter(set => (set.sessionID inSet sessionIds) && set.endDate.isDefined).map { set =>
-        (set.beginDate, set.endDate)
-      }.result
-    }
-
-    db.run(setsQuery).map { sets =>
-      val times = sets.collect { case (beginDate, Some(endDate)) => java.time.Duration.between(beginDate, endDate).getSeconds
-      }
-
-      if (times.nonEmpty) times.sum.toDouble / times.length else 0.0
-    }
-  }
-
   private def filterSessions(userID: String, year: Int, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None) = {
     sessions.filter { session =>
       val yearMatch = extractYear(session.beginDate) === year
@@ -55,6 +38,23 @@ object Query {
   private def extractMonth(date: Rep[java.time.Instant]) = SimpleFunction.unary[java.time.Instant, Int]("MONTH").apply(date)
 
   private def extractDay(date: Rep[java.time.Instant]) = SimpleFunction.unary[java.time.Instant, Int]("DAY").apply(date)
+
+  def getMeanExerciseTime(db: Database, userID: String, year: Int, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None): Future[Double] = {
+    val sessionIdsQuery = filterSessions(userID, year, month, week, day).result
+
+    val setsQuery = sessionIdsQuery.flatMap { sessionIds =>
+      sets.filter(set => (set.sessionID inSet sessionIds) && set.endDate.isDefined).map { set =>
+        (set.beginDate, set.endDate)
+      }.result
+    }
+
+    db.run(setsQuery).map { sets =>
+      val times = sets.collect { case (beginDate, Some(endDate)) => java.time.Duration.between(beginDate, endDate).getSeconds
+      }
+
+      if (times.nonEmpty) times.sum.toDouble / times.length else 0.0
+    }
+  }
 
   def getSessionByUserIDByDate(db: Database, userID: String, beginDate: Instant, endDate: Instant)(implicit ec: ExecutionContext): Future[Seq[UserSession]] = {
     val query = sessions.filter(session => session.userID === userID && session.beginDate >= beginDate && session.beginDate < endDate).result

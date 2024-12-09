@@ -31,10 +31,6 @@ object HttpFetch {
     fetchMeanExerciseTime(db, userID, year, "week", Some(month), Some(week))
   }
 
-  def fetchMeanExerciseTimeByDay(db: Database, userID: String, year: Int, month: Int, week: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
-    fetchMeanExerciseTime(db, userID, year, "day", Some(month), Some(week), Some(day))
-  }
-
   private def fetchMeanExerciseTime(db: Database, userID: String, year: Int, period: String, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None)(implicit ec: ExecutionContext): Future[String] = {
     val futures = period match {
       case "year" => (1 to 12).map(m => getMeanExerciseTime(db, userID, year, Some(m)))
@@ -51,20 +47,16 @@ object HttpFetch {
     }
   }
 
+  def fetchMeanExerciseTimeByDay(db: Database, userID: String, year: Int, month: Int, week: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
+    fetchMeanExerciseTime(db, userID, year, "day", Some(month), Some(week), Some(day))
+  }
+
   def fetchNumberOfSessionsByYear(db: Database, userID: String, year: Int)(implicit ec: ExecutionContext): Future[String] = {
     fetchNumberOfSessions(db, userID, year, "year")
   }
 
   def fetchNumberOfSessionsByMonth(db: Database, userID: String, year: Int, month: Int)(implicit ec: ExecutionContext): Future[String] = {
     fetchNumberOfSessions(db, userID, year, "month", Some(month))
-  }
-
-  def fetchNumberOfSessionsByWeek(db: Database, userID: String, year: Int, month: Int, week: Int)(implicit ec: ExecutionContext): Future[String] = {
-    fetchNumberOfSessions(db, userID, year, "week", Some(month), Some(week))
-  }
-
-  def fetchNumberOfSessionsByDay(db: Database, userID: String, year: Int, month: Int, week: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
-    fetchNumberOfSessions(db, userID, year, "day", Some(month), Some(week), Some(day))
   }
 
   private def fetchNumberOfSessions(db: Database, userID: String, year: Int, period: String, month: Option[Int] = None, week: Option[Int] = None, day: Option[Int] = None)(implicit ec: ExecutionContext): Future[String] = {
@@ -82,6 +74,14 @@ object HttpFetch {
       val count = flattenedCounts.sum
       Json.prettyPrint(numberOfSessionsToJson(period, year, month, week, day, Some(count), flattenedCounts))
     }
+  }
+
+  def fetchNumberOfSessionsByWeek(db: Database, userID: String, year: Int, month: Int, week: Int)(implicit ec: ExecutionContext): Future[String] = {
+    fetchNumberOfSessions(db, userID, year, "week", Some(month), Some(week))
+  }
+
+  def fetchNumberOfSessionsByDay(db: Database, userID: String, year: Int, month: Int, week: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {
+    fetchNumberOfSessions(db, userID, year, "day", Some(month), Some(week), Some(day))
   }
 
   def fetchSessionData(db: Database, userID: String, year: Int, month: Int, day: Int)(implicit ec: ExecutionContext): Future[String] = {

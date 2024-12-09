@@ -59,13 +59,6 @@ object HttpActor {
     completeWithFetch(future)
   }
 
-  private def completeWithFetch(fetch: => Future[String])(implicit ec: ExecutionContext): Route = {
-    onComplete(fetch) {
-      case Success(result) => complete(HttpEntity(ContentTypes.`application/json`, result))
-      case Failure(ex) => complete(StatusCodes.InternalServerError -> s"Failed: ${ex.getMessage}")
-    }
-  }
-
   private def handleExerciseTimeRequest(db: Database)(frequency: String, userID: String, date: String)(implicit ec: ExecutionContext): Route = {
     val dateTime = LocalDateTime.parse(date)
     val future: Future[String] = frequency match {
@@ -81,6 +74,14 @@ object HttpActor {
     val dateTime = LocalDateTime.parse(date)
     val future: Future[String] = fetchSessionData(db, userID, dateTime.getYear, dateTime.getMonthValue, dateTime.getDayOfMonth)
     completeWithFetch(future)
+  }
+
+  // Helper function to complete a request with the result of a future
+  private def completeWithFetch(fetch: => Future[String])(implicit ec: ExecutionContext): Route = {
+    onComplete(fetch) {
+      case Success(result) => complete(HttpEntity(ContentTypes.`application/json`, result))
+      case Failure(ex) => complete(StatusCodes.InternalServerError -> s"Failed: ${ex.getMessage}")
+    }
   }
 
   private def handleDetailedDayDataRequest(db: Database)(userID: String, date: String)(implicit ec: ExecutionContext): Route = {

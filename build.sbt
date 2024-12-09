@@ -7,7 +7,7 @@ ThisBuild / scalaVersion := "3.3.4"
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.5.2",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.5.2", // HikariCP for connection pooling
-  "org.slf4j" % "slf4j-nop" % "2.0.16",
+  "ch.qos.logback" % "logback-classic" % "1.5.12",
   "com.h2database" % "h2" % "2.3.232"
 )
 

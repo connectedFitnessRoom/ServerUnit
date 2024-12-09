@@ -6,6 +6,7 @@ import be.serverunit.actors.MachineActor.*
 import be.serverunit.api.JsonExtractor.*
 import be.serverunit.database.Air
 import be.serverunit.database.operations.Basic.insertAirQuality
+import org.slf4j.LoggerFactory
 import play.api.libs.json.*
 import slick.jdbc.JdbcBackend.Database
 
@@ -13,33 +14,33 @@ import java.time.Instant
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
-
 object MachineManager {
 
+  private val logger = LoggerFactory.getLogger(this.getClass)
   private val actorsList = scala.collection.mutable.Map[Int, akka.actor.typed.ActorRef[MachineActor.MachineMessage]]()
   private val machinePattern: Regex = "basic_frite/machine/(\\w+)/data".r
   private val airPattern: Regex = "AetherGuard/sensordata".r
 
   def apply(db: Database): Behavior[processMessage] = Behaviors.setup { context =>
-    println("MachineManager started")
+    logger.info("MachineManager started")
 
     Behaviors.receiveMessage { case MqttMessage(topic, payload) =>
-      println(s"Received message on topic $topic, I'm actor ${context.self.path.name}")
+      logger.info(s"Received message on topic $topic, I'm actor ${context.self.path.name}")
 
       // pattern matching on the topic
       topic match {
         case machinePattern(machine) => handleMachinePattern(payload, machine.toInt, context, db) match {
           case Success(_) => Behaviors.same
-          case Failure(e) => println(s"Error handling machine pattern: $e")
+          case Failure(e) => logger.error(s"Error handling machine pattern: $e")
             Behaviors.same
         }
 
         case airPattern() => handleAirData(payload, context, db) match {
           case Success(_) => Behaviors.same
-          case Failure(e) => println(s"Error handling air data: $e")
+          case Failure(e) => logger.error(s"Error handling air data: $e")
             Behaviors.same
         }
-        case other => println(s"Unknown topic: $other")
+        case other => logger.warn(s"Unknown topic: $other")
           Behaviors.same
       }
     }
@@ -65,7 +66,7 @@ object MachineManager {
         Failure(new Exception("Error: Machine actor already exists"))
       case None => extractStartData(jsonReceived) match {
         case Some((user, time, weight)) =>
-          println(s"Received data: user: $user, time: $time, weight: $weight")
+          logger.info(s"Received data: user: $user, time: $time, weight: $weight")
           val machineActor = context.spawn(MachineActor(machineID, db), s"machineActor$machineID")
           actorsList += (machineID -> machineActor)
           machineActor ! StartData(user, time, weight)
@@ -108,7 +109,7 @@ object MachineManager {
     jsonReceived.flatMap { json =>
       extractAirData(json) match {
         case Some((temperature, humidity, pm, timestamp)) =>
-          println(s"Received air data: temperature: $temperature, humidity: $humidity, pm: $pm, timestamp: $timestamp")
+          logger.info(s"Received air data: temperature: $temperature, humidity: $humidity, pm: $pm, timestamp: $timestamp")
           val airData = Air(0, temperature, humidity, pm, timestamp)
           Try(insertAirQuality(db, airData))
         case _ =>
@@ -121,6 +122,3 @@ object MachineManager {
 
   case class MqttMessage(topic: String, payload: String) extends processMessage
 }
-
-
-

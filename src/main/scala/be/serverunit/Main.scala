@@ -5,7 +5,7 @@ import akka.actor.CoordinatedShutdown
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem}
 import be.serverunit.actors.{HttpActor, MachineManager, MqttActor}
-import be.serverunit.database.utils.{InitDatabase, PrintDB}
+import be.serverunit.database.utils.InitDatabase
 import slick.jdbc.JdbcBackend.Database
 
 import scala.concurrent.Await
