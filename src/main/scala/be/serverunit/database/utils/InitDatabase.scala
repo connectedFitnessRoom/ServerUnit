@@ -55,8 +55,16 @@ object InitDatabase {
 
           // Insert sets using the correct sessionIds
           SlickTables.sets += Set(0, 1, 0, Instant.parse("2024-12-02T00:00:00Z"), Some(Instant.parse("2024-12-02T01:00:00Z")), None, 0),
-          SlickTables.sets += Set(0, 2, 0, Instant.parse("2024-12-03T00:00:00Z"), Some(Instant.parse("2024-12-03T02:00:00Z")), None, 0),
-          SlickTables.sets += Set(0, 3, 0, Instant.parse("2024-12-04T00:00:00Z"), Some(Instant.parse("2024-12-04T03:00:00Z")), None, 0),
+          SlickTables.sets += Set(0, 1, 0, Instant.parse("2024-12-02T02:00:00Z"), Some(Instant.parse("2024-12-02T03:00:00Z")), None, 0),
+          SlickTables.sets += Set(0, 1, 0, Instant.parse("2024-12-02T04:00:00Z"), Some(Instant.parse("2024-12-02T05:00:00Z")), None, 0),
+
+          SlickTables.sets += Set(0, 2, 0, Instant.parse("2024-12-03T00:00:00Z"), Some(Instant.parse("2024-12-03T01:00:00Z")), None, 0),
+          SlickTables.sets += Set(0, 2, 0, Instant.parse("2024-12-03T02:00:00Z"), Some(Instant.parse("2024-12-03T03:00:00Z")), None, 0),
+          SlickTables.sets += Set(0, 2, 0, Instant.parse("2024-12-03T04:00:00Z"), Some(Instant.parse("2024-12-03T05:00:00Z")), None, 0),
+
+          SlickTables.sets += Set(0, 3, 0, Instant.parse("2024-12-04T00:00:00Z"), Some(Instant.parse("2024-12-04T01:00:00Z")), None, 0),
+
+
           // New sets for next week
           SlickTables.sets += Set(0, 6, 0, Instant.now().plus(7, ChronoUnit.DAYS), Some(Instant.now().plus(7, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS)), None, 0),
           SlickTables.sets += Set(0, 7, 0, Instant.now().plus(8, ChronoUnit.DAYS), Some(Instant.now().plus(8, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS)), None, 0),
@@ -76,15 +84,15 @@ object InitDatabase {
           SlickTables.repetitions += Repetition(2, 90.0f, 300),
 
           // Insert multiple air qualities for user 1's sessions
-          SlickTables.airs += Air(0, 20.0f, 50.0f, 100.0f, Instant.parse("2024-12-01T00:15:00Z")),
-          SlickTables.airs += Air(1, 21.0f, 51.0f, 101.0f, Instant.parse("2024-12-01T00:30:00Z")),
-          SlickTables.airs += Air(2, 22.0f, 52.0f, 102.0f, Instant.parse("2024-12-01T00:45:00Z")),
-          SlickTables.airs += Air(3, 23.0f, 53.0f, 103.0f, Instant.parse("2024-12-02T00:15:00Z")),
-          SlickTables.airs += Air(4, 24.0f, 54.0f, 104.0f, Instant.parse("2024-12-02T00:30:00Z")),
+          SlickTables.airs += Air(0, 20.0f, 50.0f, 100.0f, Instant.parse("2024-12-04T01:00:00Z")),
+          SlickTables.airs += Air(1, 21.0f, 51.0f, 101.0f, Instant.parse("2024-12-04T01:00:00Z")),
+          SlickTables.airs += Air(2, 22.0f, 52.0f, 102.0f, Instant.parse("2024-12-04T01:00:00Z")),
+          SlickTables.airs += Air(3, 23.0f, 53.0f, 103.0f, Instant.parse("2024-12-04T01:00:00Z")),
+          SlickTables.airs += Air(4, 24.0f, 54.0f, 104.0f, Instant.parse("2024-12-04T01:00:00Z")),
           SlickTables.airs += Air(5, 25.0f, 55.0f, 105.0f, Instant.parse("2024-12-02T00:45:00Z")),
-          SlickTables.airs += Air(6, 26.0f, 56.0f, 106.0f, Instant.parse("2024-12-03T00:15:00Z")),
-          SlickTables.airs += Air(7, 27.0f, 57.0f, 107.0f, Instant.parse("2024-12-03T00:30:00Z")),
-          SlickTables.airs += Air(8, 28.0f, 58.0f, 108.0f, Instant.parse("2024-12-03T00:45:00Z"))
+          SlickTables.airs += Air(6, 26.0f, 56.0f, 106.0f, Instant.parse("2024-12-03T03:00:00Z")),
+          SlickTables.airs += Air(7, 27.0f, 57.0f, 107.0f, Instant.parse("2024-12-03T03:00:00Z")),
+          SlickTables.airs += Air(8, 28.0f, 58.0f, 108.0f, Instant.parse("2024-12-03T03:00:00Z"))
         )
 
         db.run(insertData).transform {
