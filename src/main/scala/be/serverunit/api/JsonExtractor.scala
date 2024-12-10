@@ -8,7 +8,7 @@ import java.time.{Instant, LocalDateTime, ZoneOffset}
 object JsonExtractor {
   def extractStartData(json: JsValue): Option[(String, Instant, Int)] = {
     for {
-      user <- (json \ "user").asOpt[Int].map(_.toString)
+      user <- (json \ "user").asOpt[String]
       time <- (json \ "time").asOpt[String].map(Instant.parse)
       weight <- (json \ "weight").asOpt[Int]
     } yield (user, time, weight)
