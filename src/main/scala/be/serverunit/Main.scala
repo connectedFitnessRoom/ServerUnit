@@ -17,7 +17,6 @@ import scala.io.StdIn
 object Main extends App {
   // Start H2 TCP Server
   val h2Server = Server.createTcpServer("-tcp", "-tcpAllowOthers", "-ifNotExists").start()
-  println(s"H2 TCP Server started at ${h2Server.getURL}")
 
   implicit val system: ActorSystem[NotUsed] = ActorSystem(Behaviors.empty, "serverunit")
 

@@ -9,7 +9,6 @@ import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
 object ComplexInsert {
 
@@ -26,21 +25,11 @@ object ComplexInsert {
 
   def insertData(db: Database, currentSet: UserSet, distance: Int, timer: Float): Unit = {
     val newRepetition = Repetition(currentSet.id, timer, distance)
-    insertRepetition(db, newRepetition).onComplete({
-      case Success(_) => println("Repetition inserted")
-        PrintDB.printDatabaseContents(db)
-      case Failure(e) => println(s"Error: $e")
-    }
-    )
+    insertRepetition(db, newRepetition)
   }
 
   def insertEndData(db: Database, currentSet: UserSet, reps: Int, time: Instant): Unit = {
     val updatedSet = currentSet.copy(repetitions = Some(reps), endDate = Some(time))
-    updateASet(db, updatedSet).onComplete({
-      case Success(_) => println("Set updated")
-        PrintDB.printDatabaseContents(db)
-      case Failure(e) => println(s"Error: $e")
-    }
-    )
+    updateASet(db, updatedSet)
   }
 }

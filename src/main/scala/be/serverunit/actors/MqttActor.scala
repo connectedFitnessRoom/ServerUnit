@@ -18,6 +18,7 @@ object MqttActor {
     implicit val executionContext: ExecutionContextExecutor = context.executionContext
 
     val connectionSettings = MqttConnectionSettings(
+      // Hardcoded MQTT broker address should be replaced with a configuration
       "tcp://192.168.70.39:1883",
       "test-scala3-client",
       MemoryPersistence()
