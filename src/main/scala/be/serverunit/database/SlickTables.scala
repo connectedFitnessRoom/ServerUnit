@@ -40,7 +40,7 @@ object SlickTables {
     def user = foreignKey("USER_FK", userID, users)(_.id)
   }
 
-  class Sets(tag: Tag) extends Table[UserSet](tag, "SETS") {
+  class Sets(tag: Tag) extends Table[UserSet](tag, "WORKOUT_SET") {
     def * = (id, sessionID, machineID, beginDate, endDate, repetitions, weight).mapTo[UserSet]
 
     def id = column[Long]("SET_ID", O.AutoInc, O.PrimaryKey)
