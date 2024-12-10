@@ -5,7 +5,7 @@ import akka.actor.CoordinatedShutdown
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem}
 import be.serverunit.actors.{HttpActor, MachineManager, MqttActor}
-import be.serverunit.database.utils.InitDatabase
+import be.serverunit.database.utils.{InitDatabase, PrintDB}
 import slick.jdbc.JdbcBackend.Database
 
 import scala.concurrent.Await
@@ -32,6 +32,9 @@ object Main extends App {
   val httpActor: ActorRef[HttpActor.Command] = system.systemActorOf(HttpActor(db), "httpActor")
 
   httpActor ! HttpActor.StartHttpServer
+
+  // Print the contents of the database every 10 seconds
+  system.scheduler.scheduleWithFixedDelay(Duration.Zero, Duration(10, "seconds"))(() => PrintDB.printDatabaseContents(db))
 
   // Add a shutdown hook to gracefully terminate the actor system
   CoordinatedShutdown(system).addJvmShutdownHook {
