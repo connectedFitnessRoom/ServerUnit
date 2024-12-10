@@ -57,7 +57,7 @@ object Query {
   }
 
   def getSessionByUserIDByDate(db: Database, userID: String, beginDate: Instant, endDate: Instant)(implicit ec: ExecutionContext): Future[Seq[UserSession]] = {
-    val query = sessions.filter(session => session.userID === userID && session.beginDate >= beginDate && session.beginDate < endDate).result
+    val query = sessions.filter(session => session.userID === userID && session.beginDate >= beginDate && session.endDate < endDate).result
     db.run(query)
   }
 
