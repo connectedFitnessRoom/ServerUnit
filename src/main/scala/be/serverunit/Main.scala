@@ -1,20 +1,21 @@
-import akka.actor.typed.scaladsl.adapter.*
+package be.serverunit
+
+import akka.NotUsed
+import akka.actor.CoordinatedShutdown
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem}
-import akka.actor.{Cancellable, CoordinatedShutdown, Scheduler}
-import akka.NotUsed
+import akka.actor.Cancellable
 import be.serverunit.actors.{HttpActor, MachineManager, MqttActor}
 import be.serverunit.database.utils.{InitDatabase, PrintDB}
 import slick.jdbc.JdbcBackend.Database
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.*
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.io.StdIn
 
 object Main extends App {
   implicit val system: ActorSystem[NotUsed] = ActorSystem(Behaviors.empty, "serverunit")
-  implicit val scheduler: Scheduler = system.scheduler.toClassic
 
   val db = Database.forConfig("h2mem1")
 
@@ -36,11 +37,11 @@ object Main extends App {
     Await.result(system.whenTerminated, Duration.Inf)
   }
 
-  // Schedule periodic printing of the database contents
+  // Schedule periodic database content printing and new record logging
   val cancellable: Cancellable = system.scheduler.scheduleAtFixedRate(
-    initialDelay = 0.seconds,  // Start immediately
-    interval = 20.seconds      // Repeat every 20 seconds
-  )(() => PrintDB.printDatabaseContents(db))
+    initialDelay = 0.seconds, // Start immediately
+    interval = 20.seconds     // Repeat every 20 seconds
+  )(() => PrintDB.printDatabaseContents(db))(system.executionContext)
 
   // Keep the application running until user presses return
   println("Press RETURN to stop...")
