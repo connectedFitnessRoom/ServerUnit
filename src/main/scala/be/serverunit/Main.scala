@@ -6,6 +6,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, ActorSystem}
 import be.serverunit.actors.{HttpActor, MachineManager, MqttActor}
 import be.serverunit.database.utils.InitDatabase
+import org.h2.tools.Server
 import slick.jdbc.JdbcBackend.Database
 
 import scala.concurrent.Await
@@ -14,6 +15,10 @@ import scala.concurrent.duration.Duration
 import scala.io.StdIn
 
 object Main extends App {
+  // Start H2 TCP Server
+  val h2Server = Server.createTcpServer("-tcp", "-tcpAllowOthers", "-ifNotExists").start()
+  println(s"H2 TCP Server started at ${h2Server.getURL}")
+
   implicit val system: ActorSystem[NotUsed] = ActorSystem(Behaviors.empty, "serverunit")
 
   val db = Database.forConfig("h2mem1")
@@ -35,10 +40,14 @@ object Main extends App {
   CoordinatedShutdown(system).addJvmShutdownHook {
     system.terminate()
     Await.result(system.whenTerminated, Duration.Inf)
+    h2Server.stop() // Stop H2 server
+    println("H2 TCP Server stopped.")
   }
 
   // Keep the application running until user presses return
   println("Press RETURN to stop...")
   StdIn.readLine()
   system.terminate()
+  h2Server.stop() // Stop H2 server
+  println("H2 TCP Server stopped.")
 }
