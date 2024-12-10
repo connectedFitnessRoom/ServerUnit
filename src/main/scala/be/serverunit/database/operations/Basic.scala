@@ -7,6 +7,7 @@ import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 object Basic extends SessionOperations with SetOperations with RepetitionOperations with AirOperations {
 
@@ -29,9 +30,13 @@ object Basic extends SessionOperations with SetOperations with RepetitionOperati
     db.run(repetitions += repetition)
   }
 
-  // Air operations
-  def insertAirQuality(db: Database, air: Air): Future[Int] = {
-    db.run(airs += air)
+  def insertAirQuality(db: Database, air: Air)(implicit ec: ExecutionContext): Future[Int] = {
+    val insertAction = db.run(airs += air)
+    insertAction.onComplete {
+      case Success(_) => println("Air quality data inserted successfully")
+      case Failure(e) => println(s"Failed to insert air quality data: $e")
+    }
+    insertAction
   }
 
 }

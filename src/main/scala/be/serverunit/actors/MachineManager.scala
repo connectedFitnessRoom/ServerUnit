@@ -13,6 +13,7 @@ import slick.jdbc.JdbcBackend.Database
 import java.time.Instant
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
+import scala.concurrent.ExecutionContext.Implicits.global // Import the global ExecutionContext
 
 object MachineManager {
 
