@@ -30,7 +30,7 @@ object JsonExtractor {
   }
 
   def extractAirData(json: JsValue): Option[(Float, Float, Float, Instant)] = {
-    val formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss") // Corrected pattern
     for {
       temperature <- (json \ "temperature").asOpt[Float]
       humidity <- (json \ "humidity").asOpt[Float]
