@@ -1,6 +1,6 @@
 package be.serverunit.database.utils
 
-import be.serverunit.database.{Air, Machine, Repetition, Set, SlickTables, User, UserSession}
+import be.serverunit.database.{Air, Machine, Repetition, UserSet, SlickTables, User, UserSession}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
 import slick.jdbc.meta.MTable
@@ -41,7 +41,7 @@ object InitDatabase {
           SlickTables.sessions += UserSession(0, "1", Instant.parse("2024-12-01T00:00:00Z"), Some(Instant.parse("2024-12-01T01:00:00Z"))),
           SlickTables.sessions += UserSession(0, "1", Instant.parse("2024-12-02T00:00:00Z"), Some(Instant.parse("2024-12-02T01:00:00Z"))),
           SlickTables.sessions += UserSession(0, "1", Instant.parse("2024-12-03T00:00:00Z"), Some(Instant.parse("2024-12-03T01:00:00Z"))),
-          SlickTables.sessions += UserSession(0, "2", Instant.now(), None),
+          SlickTables.sessions += UserSession(0, "1", Instant.now(), None),
           SlickTables.sessions += UserSession(0, "3", Instant.now(), None),
           // New sessions for next week
           SlickTables.sessions += UserSession(0, "1", Instant.now().plus(7, ChronoUnit.DAYS), Some(Instant.now().plus(7, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS))),
@@ -54,25 +54,25 @@ object InitDatabase {
           SlickTables.machines += Machine(2, "Machine 3"),
 
           // Insert sets using the correct sessionIds
-          SlickTables.sets += Set(0, 1, 0, Instant.parse("2024-12-02T00:00:00Z"), Some(Instant.parse("2024-12-02T01:00:00Z")), None, 0),
-          SlickTables.sets += Set(0, 1, 0, Instant.parse("2024-12-02T02:00:00Z"), Some(Instant.parse("2024-12-02T03:00:00Z")), None, 0),
-          SlickTables.sets += Set(0, 1, 0, Instant.parse("2024-12-02T04:00:00Z"), Some(Instant.parse("2024-12-02T05:00:00Z")), None, 0),
+          SlickTables.sets += UserSet(0, 1, 0, Instant.parse("2024-12-02T00:00:00Z"), Some(Instant.parse("2024-12-02T01:00:00Z")), None, 0),
+          SlickTables.sets += UserSet(0, 1, 0, Instant.parse("2024-12-02T02:00:00Z"), Some(Instant.parse("2024-12-02T03:00:00Z")), None, 0),
+          SlickTables.sets += UserSet(0, 1, 0, Instant.parse("2024-12-02T04:00:00Z"), Some(Instant.parse("2024-12-02T05:00:00Z")), None, 0),
 
-          SlickTables.sets += Set(0, 2, 0, Instant.parse("2024-12-03T00:00:00Z"), Some(Instant.parse("2024-12-03T01:00:00Z")), None, 0),
-          SlickTables.sets += Set(0, 2, 0, Instant.parse("2024-12-03T02:00:00Z"), Some(Instant.parse("2024-12-03T03:00:00Z")), None, 0),
-          SlickTables.sets += Set(0, 2, 0, Instant.parse("2024-12-03T04:00:00Z"), Some(Instant.parse("2024-12-03T05:00:00Z")), None, 0),
+          SlickTables.sets += UserSet(0, 2, 0, Instant.parse("2024-12-03T00:00:00Z"), Some(Instant.parse("2024-12-03T01:00:00Z")), None, 0),
+          SlickTables.sets += UserSet(0, 2, 0, Instant.parse("2024-12-03T02:00:00Z"), Some(Instant.parse("2024-12-03T03:00:00Z")), None, 0),
+          SlickTables.sets += UserSet(0, 2, 0, Instant.parse("2024-12-03T04:00:00Z"), Some(Instant.parse("2024-12-03T05:00:00Z")), None, 0),
 
-          SlickTables.sets += Set(0, 3, 0, Instant.parse("2024-12-04T00:00:00Z"), Some(Instant.parse("2024-12-04T01:00:00Z")), None, 0),
+          SlickTables.sets += UserSet(0, 3, 0, Instant.parse("2024-12-04T00:00:00Z"), Some(Instant.parse("2024-12-04T01:00:00Z")), None, 0),
 
 
           // New sets for next week
-          SlickTables.sets += Set(0, 6, 0, Instant.now().plus(7, ChronoUnit.DAYS), Some(Instant.now().plus(7, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS)), None, 0),
-          SlickTables.sets += Set(0, 7, 0, Instant.now().plus(8, ChronoUnit.DAYS), Some(Instant.now().plus(8, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS)), None, 0),
-          SlickTables.sets += Set(0, 8, 0, Instant.now().plus(9, ChronoUnit.DAYS), Some(Instant.now().plus(9, ChronoUnit.DAYS).plus(3, ChronoUnit.HOURS)), None, 0),
+          SlickTables.sets += UserSet(0, 6, 0, Instant.now().plus(7, ChronoUnit.DAYS), Some(Instant.now().plus(7, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS)), None, 0),
+          SlickTables.sets += UserSet(0, 7, 0, Instant.now().plus(8, ChronoUnit.DAYS), Some(Instant.now().plus(8, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS)), None, 0),
+          SlickTables.sets += UserSet(0, 8, 0, Instant.now().plus(9, ChronoUnit.DAYS), Some(Instant.now().plus(9, ChronoUnit.DAYS).plus(3, ChronoUnit.HOURS)), None, 0),
 
           // Sets for other users
-          SlickTables.sets += Set(1, 4, 1, Instant.now(), None, None, 0),
-          SlickTables.sets += Set(2, 5, 2, Instant.now(), None, None, 0),
+          SlickTables.sets += UserSet(1, 4, 1, Instant.now(), None, None, 0),
+          SlickTables.sets += UserSet(2, 5, 2, Instant.now(), None, None, 0),
 
           // Insert some repetitions
           SlickTables.repetitions += Repetition(1, 0, 0),

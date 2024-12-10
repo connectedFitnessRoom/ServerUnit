@@ -1,7 +1,7 @@
 package be.serverunit.database.operations
 
 import be.serverunit.database.SlickTables.*
-import be.serverunit.database.{Air, Repetition, Set, UserSession}
+import be.serverunit.database.{Air, Repetition, UserSet, UserSession}
 import be.serverunit.traits.database.{AirOperations, RepetitionOperations, SessionOperations, SetOperations}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
@@ -17,11 +17,11 @@ object Basic extends SessionOperations with SetOperations with RepetitionOperati
   }
 
   // Set operations
-  override def insertSetWithReturn(db: Database, set: Set)(implicit ec: ExecutionContext): Future[Set] = {
+  override def insertSetWithReturn(db: Database, set: UserSet)(implicit ec: ExecutionContext): Future[UserSet] = {
     db.run((sets returning sets.map(_.id)) += set).map(generatedId => set.copy(id = generatedId))
   }
 
-  override def updateSet(db: Database, set: Set): Future[Int] = {
+  override def updateSet(db: Database, set: UserSet): Future[Int] = {
     db.run(sets.filter(_.id === set.id).update(set))
   }
 

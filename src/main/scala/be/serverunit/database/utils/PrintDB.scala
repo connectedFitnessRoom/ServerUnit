@@ -1,6 +1,6 @@
 package be.serverunit.database.utils
 
-import be.serverunit.database.{Air, Machine, Repetition, Set, SlickTables, User, UserSession}
+import be.serverunit.database.{Air, Machine, Repetition, UserSet, SlickTables, User, UserSession}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database
 
@@ -13,7 +13,7 @@ object PrintDB {
     // Query all tables and print their contents
     val usersFuture: Future[Seq[User]] = db.run(SlickTables.users.result)
     val sessionsFuture: Future[Seq[UserSession]] = db.run(SlickTables.sessions.result)
-    val setsFuture: Future[Seq[Set]] = db.run(SlickTables.sets.result)
+    val setsFuture: Future[Seq[UserSet]] = db.run(SlickTables.sets.result)
     val machinesFuture: Future[Seq[Machine]] = db.run(SlickTables.machines.result)
     val repetitionsFuture: Future[Seq[Repetition]] = db.run(SlickTables.repetitions.result)
     val airQualitiesFuture: Future[Seq[Air]] = db.run(SlickTables.airs.result)

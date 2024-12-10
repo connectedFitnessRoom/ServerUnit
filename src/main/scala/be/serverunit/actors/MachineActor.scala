@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 
 class MachineActor(machineID: Int, db: Database) {
   def initialBehavior(): Behavior[MachineActor.MachineMessage] = Behaviors.setup { context =>
-    var currentSet: Option[Set] = None
+    var currentSet: Option[UserSet] = None
 
     implicit val ec: ExecutionContextExecutor = context.executionContext
     val log = context.log
@@ -32,7 +32,7 @@ class MachineActor(machineID: Int, db: Database) {
 
       case MachineActor.Data(distance, timer) =>
         currentSet match {
-          case Some(s: Set) =>
+          case Some(s: UserSet) =>
             insertData(db, s, distance, timer)
             Behaviors.same
           case None =>
@@ -42,7 +42,7 @@ class MachineActor(machineID: Int, db: Database) {
 
       case MachineActor.EndData(reps, time) =>
         currentSet match {
-          case Some(s: Set) =>
+          case Some(s: UserSet) =>
             insertEndData(db, s, reps, time)
             Behaviors.stopped
           case None =>

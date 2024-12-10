@@ -2,7 +2,7 @@ package be.serverunit.database.operations
 
 import be.serverunit.database.operations.Basic.*
 import be.serverunit.database.utils.PrintDB
-import be.serverunit.database.{Repetition, Set}
+import be.serverunit.database.{Repetition, UserSet}
 import slick.jdbc.JdbcBackend.Database
 
 import java.time.Instant
@@ -13,10 +13,10 @@ import scala.util.{Failure, Success}
 
 object ComplexInsert {
 
-  def insertStartData(db: Database, machineID: Int, userID: String, time: Instant, weight: Float): Future[Option[Set]] = {
+  def insertStartData(db: Database, machineID: Int, userID: String, time: Instant, weight: Float): Future[Option[UserSet]] = {
     getLastSessionByUser(db, userID).flatMap {
       case Some(sess) =>
-        val newSet = Set(0, sess.id, machineID, time, None, None, weight)
+        val newSet = UserSet(0, sess.id, machineID, time, None, None, weight)
         // Insert the set and retrieve the SET
         insertSetWithReturn(db, newSet).map(insertedSet => Some(insertedSet))
       case None =>
@@ -24,7 +24,7 @@ object ComplexInsert {
     }
   }
 
-  def insertData(db: Database, currentSet: Set, distance: Int, timer: Float): Unit = {
+  def insertData(db: Database, currentSet: UserSet, distance: Int, timer: Float): Unit = {
     val newRepetition = Repetition(currentSet.id, timer, distance)
     insertRepetition(db, newRepetition).onComplete({
       case Success(_) => println("Repetition inserted")
@@ -34,7 +34,7 @@ object ComplexInsert {
     )
   }
 
-  def insertEndData(db: Database, currentSet: Set, reps: Int, time: Instant): Unit = {
+  def insertEndData(db: Database, currentSet: UserSet, reps: Int, time: Instant): Unit = {
     val updatedSet = currentSet.copy(repetitions = Some(reps), endDate = Some(time))
     updateSet(db, updatedSet).onComplete({
       case Success(_) => println("Set updated")
