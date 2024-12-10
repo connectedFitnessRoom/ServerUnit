@@ -18,7 +18,7 @@ object MqttActor {
     implicit val executionContext: ExecutionContextExecutor = context.executionContext
 
     val connectionSettings = MqttConnectionSettings(
-      "tcp://192.168.2.227:1883",
+      "tcp://192.168.70.39:1883",
       "test-scala3-client",
       MemoryPersistence()
     )
