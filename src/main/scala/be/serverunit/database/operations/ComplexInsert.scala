@@ -36,7 +36,7 @@ object ComplexInsert {
 
   def insertEndData(db: Database, currentSet: UserSet, reps: Int, time: Instant): Unit = {
     val updatedSet = currentSet.copy(repetitions = Some(reps), endDate = Some(time))
-    updateSet(db, updatedSet).onComplete({
+    updateASet(db, updatedSet).onComplete({
       case Success(_) => println("Set updated")
         PrintDB.printDatabaseContents(db)
       case Failure(e) => println(s"Error: $e")
