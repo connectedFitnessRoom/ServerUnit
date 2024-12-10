@@ -70,10 +70,6 @@ object InitDatabase {
           SlickTables.sets += UserSet(0, 7, 0, Instant.now().plus(8, ChronoUnit.DAYS), Some(Instant.now().plus(8, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS)), None, 0),
           SlickTables.sets += UserSet(0, 8, 0, Instant.now().plus(9, ChronoUnit.DAYS), Some(Instant.now().plus(9, ChronoUnit.DAYS).plus(3, ChronoUnit.HOURS)), None, 0),
 
-          // Sets for other users
-          SlickTables.sets += UserSet(1, 4, 1, Instant.now(), None, None, 0),
-          SlickTables.sets += UserSet(2, 5, 2, Instant.now(), None, None, 0),
-
           // Insert some repetitions
           SlickTables.repetitions += Repetition(1, 0, 0),
           SlickTables.repetitions += Repetition(2, 0, 0),
