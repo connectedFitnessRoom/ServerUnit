@@ -35,11 +35,11 @@ object Main extends App {
 
   httpActor ! HttpActor.StartHttpServer
 
-  // Add a shutdown hook to gracefully terminate the actor system
+  // Shutdown hook to gracefully terminate the actor system
   CoordinatedShutdown(system).addJvmShutdownHook {
     system.terminate()
     Await.result(system.whenTerminated, Duration.Inf)
-    h2Server.stop() // Stop H2 server
+    h2Server.stop()
     println("H2 TCP Server stopped.")
   }
 
@@ -47,6 +47,6 @@ object Main extends App {
   println("Press RETURN to stop...")
   StdIn.readLine()
   system.terminate()
-  h2Server.stop() // Stop H2 server
+  h2Server.stop()
   println("H2 TCP Server stopped.")
 }

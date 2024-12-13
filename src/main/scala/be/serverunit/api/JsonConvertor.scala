@@ -74,16 +74,6 @@ object JsonConvertor {
     )
   }
 
-  def sessionCountToJson(year: Int, month: Int, day: Int, sessionCount: Int, sessions: Seq[DetailedSessionData]): JsValue = {
-    Json.obj(
-      "year" -> year,
-      "month" -> month,
-      "day" -> day,
-      "session_count" -> sessionCount,
-      "sessions" -> sessions.map(detailedSessionToJson)
-    )
-  }
-
   private def detailedSessionToJson(session: DetailedSessionData): JsObject = {
     Json.obj(
       "sessionDuration" -> session.sessionDurationString,
@@ -93,6 +83,16 @@ object JsonConvertor {
         "particulate" -> session.envData._3
       ),
       "sets" -> session.sets
+    )
+  }
+
+  def sessionCountToJson(year: Int, month: Int, day: Int, sessionCount: Int, sessions: Seq[DetailedSessionData]): JsValue = {
+    Json.obj(
+      "year" -> year,
+      "month" -> month,
+      "day" -> day,
+      "session_count" -> sessionCount,
+      "sessions" -> sessions.map(detailedSessionToJson)
     )
   }
 

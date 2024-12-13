@@ -1,7 +1,7 @@
 package be.serverunit.database.operations
 
 import be.serverunit.database.SlickTables.*
-import be.serverunit.database.{Air, Repetition, UserSet, UserSession}
+import be.serverunit.database.{Air, Repetition, UserSession, UserSet}
 import be.serverunit.traits.database.{AirOperations, RepetitionOperations, SessionOperations, SetOperations}
 import slick.jdbc.H2Profile.api.*
 import slick.jdbc.JdbcBackend.Database

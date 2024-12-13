@@ -55,12 +55,12 @@ object SlickTables {
 
     def sessionID = column[Long]("SESSION_ID")
 
-    def machineID = column[Int]("MACHINE_ID")
-
     // Foreign key
     def session = foreignKey("SESSION_FK", sessionID, sessions)(_.id)
 
     def machine = foreignKey("MACHINE_FK", machineID, machines)(_.machineID)
+
+    def machineID = column[Int]("MACHINE_ID")
 
   }
 
@@ -82,10 +82,10 @@ object SlickTables {
 
     def timer = column[Float]("TIMER")
 
-    def setID = column[Long]("SET_ID")
-
     // Foreign key
     def set = foreignKey("SET_FK", setID, sets)(_.id)
+
+    def setID = column[Long]("SET_ID")
 
   }
 

@@ -11,9 +11,9 @@ import play.api.libs.json.*
 import slick.jdbc.JdbcBackend.Database
 
 import java.time.Instant
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.matching.Regex
-import scala.util.{Failure, Success, Try}
-import scala.concurrent.ExecutionContext.Implicits.global // Import the global ExecutionContext
+import scala.util.{Failure, Success, Try} // Import the global ExecutionContext
 
 object MachineManager {
 
