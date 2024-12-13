@@ -12,7 +12,7 @@ import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 class MachineActor(machineID: Int, db: Database) {
-  def initialBehavior(): Behavior[MachineActor.MachineMessage] = Behaviors.setup { context =>
+  private def initialBehavior(): Behavior[MachineActor.MachineMessage] = Behaviors.setup { context =>
     var currentSet: Option[UserSet] = None
 
     implicit val ec: ExecutionContextExecutor = context.executionContext
@@ -55,6 +55,7 @@ class MachineActor(machineID: Int, db: Database) {
 
 object MachineActor {
 
+  // Create a new MachineActor with the given machineID
   def apply(machineID: Int, db: Database): Behavior[MachineMessage] =
     new MachineActor(machineID, db).initialBehavior()
 

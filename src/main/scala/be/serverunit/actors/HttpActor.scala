@@ -82,7 +82,6 @@ object HttpActor {
     completeWithFetch(future)
   }
 
-  // Helper function to complete a request with the result of a future
   private def completeWithFetch(fetch: => Future[String])(implicit ec: ExecutionContext): Route = {
     onComplete(fetch) {
       case Success(result) => complete(HttpEntity(ContentTypes.`application/json`, result))

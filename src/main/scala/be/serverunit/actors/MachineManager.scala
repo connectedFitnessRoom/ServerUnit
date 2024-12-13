@@ -19,6 +19,9 @@ object MachineManager {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val actorsList = scala.collection.mutable.Map[Int, akka.actor.typed.ActorRef[MachineActor.MachineMessage]]()
+  
+  // Define the patterns for the topics
+  // The pattern for the machine data retrieve the machineID from the topic so that we can send the data to the corresponding MachineActor
   private val machinePattern: Regex = "basic_frite/machine/(\\w+)/data".r
   private val airPattern: Regex = "AetherGuard/sensordata".r
 
@@ -30,6 +33,7 @@ object MachineManager {
 
       // pattern matching on the topic
       topic match {
+        // Use the machinePattern to extract the machineID from the topic and send the payload to the corresponding MachineActor
         case machinePattern(machine) => handleMachinePattern(payload, machine.toInt, context, db) match {
           case Success(_) => Behaviors.same
           case Failure(e) => logger.error(s"Error handling machine pattern: $e")
@@ -61,6 +65,7 @@ object MachineManager {
     }
   }
 
+  // Create a new MachineActor and store it in the actorsList mapped to the machineID in order to retrieve and send messages to it later 
   private def handleStart(jsonReceived: JsValue, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
     actorsList.get(machineID) match {
       case Some(_) =>
@@ -78,6 +83,7 @@ object MachineManager {
     }
   }
 
+  // Extract the data and send it to the corresponding MachineActor by looking it up in the actorsList
   private def handleMachineData(jsonReceived: JsValue, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
     actorsList.get(machineID) match {
       case Some(actor) => extractData(jsonReceived) match {
@@ -90,6 +96,8 @@ object MachineManager {
     }
   }
 
+  // Extract the data and send it to the corresponding MachineActor by looking it up in the actorsList
+  // Then stop the MachineActor and remove it from the actorsList
   private def handleEndData(jsonReceived: JsValue, machineID: Int, context: ActorContext[processMessage], db: Database): Try[Unit] = {
     actorsList.get(machineID) match {
       case Some(actor) => extractEndData(jsonReceived) match {

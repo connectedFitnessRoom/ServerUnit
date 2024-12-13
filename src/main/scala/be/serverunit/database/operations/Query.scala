@@ -96,7 +96,7 @@ object Query {
           case Some(endDate) => Some(Duration.between(session.beginDate, endDate).getSeconds)
           case None => None // Session is still ongoing or endDate is not set
         }
-      case None => None // Session not found
+      case None => None
     }
   }
 

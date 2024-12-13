@@ -24,7 +24,7 @@ object MqttActor {
       MemoryPersistence()
     )
 
-    // Restart settings for the source
+    // Restart settings for the source (in case of failure)
     val restartSettings = RestartSettings.apply(1.second, 10.seconds, 0.2)
 
     val mqttSource = RestartSource.withBackoff(restartSettings) { () =>

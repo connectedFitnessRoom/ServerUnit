@@ -12,9 +12,9 @@ import scala.concurrent.{ExecutionContext, Future}
 object HttpFetch {
 
   def fetchAirQuality(db: Database)(implicit ec: ExecutionContext): Future[String] = {
-    getLatestAirQuality(db).map { case Some(airQuality) => Json.prettyPrint(airToJson(airQuality))
-    case None => "No air quality data available"
-    }.recover { case e: Exception => s"Error: ${e.getMessage}"
+    getLatestAirQuality(db).map {
+      case Some(airQuality) => Json.prettyPrint(airToJson(airQuality))
+      case None => "No air quality data available"
     }
   }
 
@@ -35,6 +35,8 @@ object HttpFetch {
     }
   }
 
+  // Given a period, year, month, week, day, and a function to compute the value for that period, create a sequence of futures
+  // Used to refactor the fetchMeanExerciseTime and fetchNumberOfSessions functions to reduce code duplication
   private def createPeriodFutures[T](period: String, year: Int, month: Option[Int], week: Option[Int], day: Option[Int], compute: (Option[Int], Option[Int], Option[Int]) => Future[T]): Seq[Future[T]] = {
     period match {
       case "year" => (1 to 12).map(m => compute(Some(m), None, None))
